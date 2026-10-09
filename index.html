@@ -144,6 +144,29 @@ ul.items{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
 .search .clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);font:inherit;font-size:1rem;line-height:1;border:0;background:none;color:var(--muted);cursor:pointer;padding:4px 6px;border-radius:6px}
 .search .clear:hover{background:var(--sunk);color:var(--fg)}
 mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 1px}
+.scan{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.scan .btn{display:inline-flex;align-items:center;gap:6px;flex-direction:row;color:var(--fg);font-size:.95rem;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.scan .linkish{font:inherit;font-size:.82rem;color:var(--accent);cursor:pointer;padding:4px 2px;text-decoration:underline;text-underline-offset:3px;flex-direction:row}
+.scan .busy{opacity:.5;pointer-events:none}
+.scan-out{display:flex;flex-direction:column;gap:10px;background:var(--sunk);border-radius:8px;padding:12px}
+.scan-top{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:start}
+.scan-top img{width:64px;height:88px;object-fit:cover;border-radius:6px;background:var(--line)}
+.scan-st{font-size:.88rem;display:flex;flex-direction:column;gap:6px;min-width:0}
+.scan-bar{height:5px;border-radius:99px;background:var(--line);overflow:hidden}
+.scan-bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.scan-out label{font-size:.78rem}
+.scan-chips{display:flex;flex-wrap:wrap;gap:5px}
+.scan-chips button{font:inherit;font-size:.8rem;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:99px;padding:4px 10px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.scan-chips button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.scan-cands{display:flex;flex-direction:column;gap:6px}
+.scan-cand{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center;text-align:left;font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;padding:6px;cursor:pointer}
+.scan-cand[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.scan-cand img{width:44px;height:61px;object-fit:cover;border-radius:4px;background:var(--line)}
+.scan-cand span{display:flex;flex-direction:column;gap:2px;min-width:0;font-size:.85rem}
+.scan-cand small{color:var(--muted);font-size:.76rem}
+.scan-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.scan-acts .btn{padding:7px 12px;font-size:.88rem}
+.scan-warn{color:var(--warn);font-size:.8rem}
 .namebtn{font:inherit;font-weight:600;color:var(--fg);background:none;border:0;padding:0;text-align:left;cursor:pointer;overflow-wrap:anywhere}
 .namebtn:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
 .sell-edit{background:var(--accent-soft)}
@@ -393,6 +416,13 @@ td.zero{color:var(--muted)}
         <button type="button" id="s-obtenu" aria-pressed="false" title="Carte tirée d'un booster, cadeau, échange… sans dépense">Obtenu</button>
         <button type="button" id="s-vente" aria-pressed="false">Vente</button>
       </div>
+      <div class="scan" id="scan-box">
+        <label class="btn" for="scan-file-cam" id="scan-cam"><span aria-hidden="true">📷</span> Scanner une carte</label>
+        <label class="linkish" for="scan-file" id="scan-pick">ou importer une photo</label>
+        <input type="file" id="scan-file-cam" class="vh" accept="image/*" capture="environment" aria-label="Prendre une photo de la carte">
+        <input type="file" id="scan-file" class="vh" accept="image/*" aria-label="Importer une photo de la carte">
+      </div>
+      <div class="scan-out" id="scan-out" hidden></div>
       <label>Article<input id="g-lib" required maxlength="80" placeholder="Ex. Display, carte gradée, booster"></label>
       <label>Lien Cardmarket<input id="g-lien" type="url" maxlength="400" placeholder="https://www.cardmarket.com/fr/…"></label>
       <div class="row2">
@@ -453,8 +483,9 @@ td.zero{color:var(--muted)}
       <p class="hint" id="bk-msg" hidden></p>
     </section>
     <details id="footer-details">
-      <summary>Version 34 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 35 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v35</span><span>Scan de carte : lecture du texte dans le téléphone, recherche dans la base Pokémon (extension, image, tendance Cardmarket).</span></li>
         <li><span class="v">v34</span><span>Redirection automatique vers l&#x27;adresse sécurisée (https).</span></li>
         <li><span class="v">v33</span><span>Version indépendante sur stock.philoudng.fr : données dans l&#x27;appareil, sauvegarde et restauration, installable sur l&#x27;écran d&#x27;accueil.</span></li>
         <li><span class="v">v32</span><span>Scan de carte retiré pour l&#x27;instant (indisponible sur téléphone).</span></li>
@@ -1043,7 +1074,7 @@ td.zero{color:var(--muted)}
     });
   }
   // ---- Cardmarket : lien, relevés de cote, mini-courbe
-  function cmOk(u){ try{ const x=new URL(u); return x.protocol==='https:' && (x.hostname==='cardmarket.com' || x.hostname.endsWith('.cardmarket.com')); }catch(e){ return false; } }
+  function cmOk(u){ try{ const x=new URL(u); return x.protocol==='https:' && (x.hostname==='cardmarket.com' || x.hostname.endsWith('.cardmarket.com') || (x.hostname==='prices.pokemontcg.io' && x.pathname.startsWith('/cardmarket/'))); }catch(e){ return false; } }
   function cmLink(u){ const a=document.createElement('a'); a.href=u; a.target='_blank'; a.rel='noopener noreferrer'; a.className='cm'; a.textContent='Cardmarket ↗'; return a; }
   function lastCote(t){ const c=Array.isArray(t.cotes)?t.cotes:[]; return c.length?c[c.length-1]:null; }
   function spark(cs){
@@ -1251,7 +1282,7 @@ td.zero{color:var(--muted)}
   $('tcg-search').addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.target.value=''; S.tcgQuery=''; render(); } });
   $('tcg-search-clear').addEventListener('click',()=>{ $('tcg-search').value=''; S.tcgQuery=''; render(); $('tcg-search').focus(); });
   $('s-achat').addEventListener('click',()=>setSens('achat')); $('s-obtenu').addEventListener('click',()=>setSens('obtenu')); $('s-vente').addEventListener('click',()=>setSens('vente'));
-  function resetTcg(){ fG.reset(); S.editing.tcg=null; $('g-date').value=todayISO(); setSens(S.sens); setEditing('tcg',fG,$('f-tcg-title'),`Nouveau mouvement ${gameName(S.game)}`,null); showMsg(fG); }
+  function resetTcg(){ fG.reset(); S.editing.tcg=null; S.scanCote=null; $('g-date').value=todayISO(); setSens(S.sens); setEditing('tcg',fG,$('f-tcg-title'),`Nouveau mouvement ${gameName(S.game)}`,null); showMsg(fG); }
   function editTcg(t){ S.editing.tcg=t._id; setSens(t.obtenu?'obtenu':t.sens); $('g-cote').value = lastCote(t) ? lastCote(t).prix : ''; fillMoyens($('g-moyen'),t.sens,t.moyen||''); fillComptes($('g-compte'),t.compteId||''); $('g-lib').value=t.libelle||''; $('g-montant').value= Array.isArray(t.prix)&&t.prix.length>1 ? t.prix.map(fmtNum).join('+') : fmtNum(cents(puOf(t))); $('g-qte').value=qteOf(t); syncG(); $('g-cout').value=typeof t.cpu==='number'?t.cpu:(typeof t.cout==='number'?cents(t.cout/qteOf(t)):''); $('g-plat').value=t.plateforme||''; $('g-date').value=t.date||todayISO(); $('g-cdate').value=t.cdate||''; $('g-lien').value=t.lien||'';
     setEditing('tcg',fG,$('f-tcg-title'),'',t._id); $('g-lib').focus(); }
   fG.querySelector('[data-cancel]').addEventListener('click',resetTcg);
@@ -1279,6 +1310,7 @@ td.zero{color:var(--muted)}
     const lien=$('g-lien').value.trim();
     if(lien){ if(!cmOk(lien)){ showMsg(fG,'Le lien doit être une adresse https://…cardmarket.com/… copiée depuis la fiche de la carte.'); return; } d.lien=lien; }
     if(prev && Array.isArray(prev.cotes)) d.cotes=prev.cotes;
+    if(!d.cotes && S.scanCote && S.sens==='achat') d.cotes=[{date:todayISO(), prix:S.scanCote}];
     if(prev && prev.achatId) d.achatId=prev.achatId;
     payFields(d,$('g-moyen'),$('g-compte'));
     if(await save(id,d,fG)){ if(!id) rememberPay(S.sens,$('g-moyen').value,$('g-compte').value); resetTcg(); }
@@ -1305,6 +1337,161 @@ td.zero{color:var(--muted)}
   let start='tresorerie';
   try{ start=localStorage.getItem('stock-tab')||start; }catch(e){}
   if(start.startsWith('g:')){ S.game=start.slice(2); resetTcg(); setTab('tcg'); } else setTab(['tresorerie','abonnements','bilan'].includes(start)?start:'tresorerie');
+
+  // ---- Scan de carte (lecture du texte dans le téléphone + base Pokémon publique)
+  const TESS_URL='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+  const CM_SLUG={pokemon:'Pokemon', onepiece:'OnePiece', lorcana:'Lorcana'};
+  const NAME_STOP=/^(pv|hp|pok[eé]mon|de base|basique|stade|niveau|base|niveau|stage|basic|talent|ability|attaque|faiblesse|weakness|r[ée]sistance|resistance|retraite|retreat|illus|illustrator|leader|character|personnage|event|[ée]v[ée]nement|counter|trigger|cost|power|evolves|[ée]volue)\b/i;
+  let tessWorker=null, tessLoading=null, scanSeq=0;
+  function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.async=true; s.onload=res; s.onerror=()=>rej(new Error('script')); document.head.append(s); }); }
+  async function getWorker(onProg){
+    if(tessWorker) return tessWorker;
+    if(!tessLoading) tessLoading=(async()=>{
+      if(!window.Tesseract) await loadScript(TESS_URL);
+      const w=await Tesseract.createWorker('fra', 1, { logger: m=>{ if(scanProgress) scanProgress(m); } });
+      tessWorker=w; return w; })();
+    try{ return await tessLoading; }catch(e){ tessLoading=null; throw e; }
+  }
+  let scanProgress=null;
+  async function prepImage(file){
+    const url=URL.createObjectURL(file);
+    try{
+      const img=await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url; });
+      const max=1800, k=Math.min(1, max/Math.max(img.naturalWidth,img.naturalHeight));
+      const c=document.createElement('canvas'); c.width=Math.round(img.naturalWidth*k); c.height=Math.round(img.naturalHeight*k);
+      const g=c.getContext('2d'); g.drawImage(img,0,0,c.width,c.height);
+      const d=g.getImageData(0,0,c.width,c.height), a=d.data;
+      for(let i=0;i<a.length;i+=4){ let y=0.299*a[i]+0.587*a[i+1]+0.114*a[i+2]; y=(y-128)*1.35+128; y=y<0?0:y>255?255:y; a[i]=a[i+1]=a[i+2]=y; }
+      g.putImageData(d,0,0);
+      return c;
+    } finally { setTimeout(()=>URL.revokeObjectURL(url), 60000); }
+  }
+  function parseCard(txt, game){
+    const raw=String(txt||'');
+    const lines=raw.split(/\n+/).map(l=>l.replace(/[|_~`^"“”«»*•·]/g,' ').replace(/\s+/g,' ').trim()).filter(Boolean);
+    const flat=raw.replace(/\s+/g,' ');
+    const up=flat.toUpperCase().replace(/0P(?=\d)/g,'OP');
+    let number='', code='';
+    const op=up.match(/\b((?:OP|ST|EB|PRB)\s?\d{2})\s*-\s*(\d{3})\b/) || up.match(/\b(P)\s*-\s*(\d{3})\b/);
+    if(op) code=(op[1].replace(/\s/g,'')+'-'+op[2]);
+    const pk=flat.match(/\b(\d{1,3})\s*\/\s*(\d{2,3})\b/);
+    if(pk) number=`${pk[1]}/${pk[2]}`;
+    const names=[];
+    for(const l of lines){
+      const t=l.replace(/\b(PV|HP)\s*\d+.*$/i,'').replace(/[^\p{L}\p{N}' .\-:!?&]/gu,' ').replace(/\s+/g,' ').trim();
+      if(t.length<3 || t.length>40) continue;
+      if(!/\p{L}{4,}/u.test(t) || NAME_STOP.test(t)) continue;
+      if((t.match(/\d/g)||[]).length > t.length*0.25) continue;
+      if(/\d{2,}\s*\/\s*\d{2,}/.test(t)) continue;
+      if(!names.includes(t)) names.push(t);
+      if(names.length>=8) break;
+    }
+    return {number, code, names, ref: game==='onepiece' ? (code||number) : (number||code)};
+  }
+  async function pokeLookup(number){
+    const m=String(number).match(/^(\d{1,3})\/(\d{2,3})$/); if(!m) return [];
+    const q=`number:${parseInt(m[1],10)} set.printedTotal:${parseInt(m[2],10)}`;
+    const url=`https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(q)}&select=id,name,number,set,images,cardmarket&pageSize=12&orderBy=-set.releaseDate`;
+    const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),12000);
+    try{ const r=await fetch(url,{signal:ctl.signal}); if(!r.ok) throw new Error('http '+r.status); const j=await r.json(); return Array.isArray(j.data)?j.data:[]; }
+    finally{ clearTimeout(t); }
+  }
+  function cmSearch(game, q){
+    return CM_SLUG[game] ? `https://www.cardmarket.com/fr/${CM_SLUG[game]}/Products/Search?searchString=${encodeURIComponent(q)}`
+                         : `https://www.google.com/search?q=${encodeURIComponent('cardmarket '+gameName(game)+' '+q)}`;
+  }
+  function scanClose(){ scanSeq++; const o=$('scan-out'); o.hidden=true; o.replaceChildren(); }
+  ['scan-file-cam','scan-file'].forEach(id=>$(id).addEventListener('change',e=>{ const f=e.target.files&&e.target.files[0]; e.target.value=''; if(f) scanCard(f); }));
+  async function scanCard(file){
+    const my=++scanSeq, game=S.game;
+    const out=$('scan-out'); out.hidden=false; out.replaceChildren();
+    const top=document.createElement('div'); top.className='scan-top';
+    const img=document.createElement('img'); img.alt='Photo de la carte'; img.src=URL.createObjectURL(file);
+    const st=document.createElement('div'); st.className='scan-st';
+    const msg=document.createElement('span'); msg.textContent= tessWorker ? 'Lecture de la carte…' : 'Chargement de l’outil de lecture (seulement la première fois)…';
+    const bar=document.createElement('div'); bar.className='scan-bar'; const fill=document.createElement('i'); bar.append(fill);
+    const stop=document.createElement('button'); stop.type='button'; stop.className='btn'; stop.textContent='Annuler'; stop.addEventListener('click',scanClose);
+    st.append(msg,bar); top.append(img,st); out.append(top, stop);
+    $('scan-cam').classList.add('busy');
+    scanProgress = m=>{ if(my!==scanSeq) return; if(m.status==='recognizing text'){ msg.textContent='Lecture de la carte…'; fill.style.width=Math.round((m.progress||0)*100)+'%'; } else if(m.progress!=null){ fill.style.width=Math.round(m.progress*100)+'%'; } };
+    try{
+      const [w, canvas]=await Promise.all([getWorker(), prepImage(file)]);
+      if(my!==scanSeq) return;
+      const { data } = await w.recognize(canvas);
+      if(my!==scanSeq) return;
+      const parsed=parseCard(data && data.text, game);
+      let cands=[], lookupErr=false;
+      if(game==='pokemon' && parsed.number){ msg.textContent='Recherche de la carte…'; try{ cands=await pokeLookup(parsed.number); }catch(e){ lookupErr=true; } }
+      if(my!==scanSeq) return;
+      showScanResult(parsed, cands, lookupErr, img, game);
+    }catch(e){
+      if(my!==scanSeq) return;
+      out.replaceChildren(); const w=document.createElement('span'); w.className='scan-warn';
+      w.textContent = navigator.onLine===false ? 'Pas de connexion : la première lecture a besoin d’internet pour charger l’outil.' : 'La lecture a échoué. Réessaie avec une photo nette, de face, sans reflet.';
+      const a=document.createElement('div'); a.className='scan-acts';
+      const c=document.createElement('button'); c.type='button'; c.className='btn'; c.textContent='Fermer'; c.addEventListener('click',scanClose);
+      a.append(c); out.append(w,a);
+    }finally{ $('scan-cam').classList.remove('busy'); }
+  }
+  function showScanResult(p, cands, lookupErr, img, game){
+    const out=$('scan-out'); out.replaceChildren();
+    const top=document.createElement('div'); top.className='scan-top'; const info=document.createElement('div'); info.className='scan-st';
+    const title=document.createElement('strong'); title.textContent='Résultat de la lecture'; info.append(title);
+    if(!p.names.length && !p.ref){ const w=document.createElement('span'); w.className='scan-warn'; w.textContent='Aucun texte lisible. Reprends la photo de face, bien éclairée, carte entière.'; info.append(w); }
+    top.append(img, info); out.append(top);
+    // Nom
+    const nameL=document.createElement('label'); nameL.textContent='Nom de la carte (touche une proposition ou corrige)';
+    const nameI=document.createElement('input'); nameI.id='scan-name'; nameI.maxLength=60; nameI.value=p.names[0]||''; nameL.append(nameI); out.append(nameL);
+    if(p.names.length>1){ const ch=document.createElement('div'); ch.className='scan-chips';
+      p.names.forEach(n=>{ const b=document.createElement('button'); b.type='button'; b.textContent=n; b.setAttribute('aria-pressed',String(n===nameI.value));
+        b.addEventListener('click',()=>{ nameI.value=n; ch.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); }); ch.append(b); });
+      out.append(ch); }
+    // Numéro
+    const numL=document.createElement('label'); numL.textContent = game==='onepiece' ? 'Code de la carte (ex. OP05-119)' : 'Numéro (ex. 199/165)';
+    const numI=document.createElement('input'); numI.id='scan-num'; numI.maxLength=20; numI.value=p.ref||''; numL.append(numI); out.append(numL);
+    // Cartes Pokémon correspondantes
+    let chosen=null; const fresh=c=>{ const u=c&&c.cardmarket&&c.cardmarket.updatedAt; if(!u) return false; const t=Date.parse(u.replace(/\//g,'-')); return isFinite(t) && Date.now()-t < 45*86400000; };
+    if(game==='pokemon'){
+      if(cands.length){
+        const h=document.createElement('label'); h.textContent = cands.length>1 ? 'Quelle carte est-ce ? (même numéro dans plusieurs extensions)' : 'Carte trouvée'; out.append(h);
+        const list=document.createElement('div'); list.className='scan-cands';
+        cands.forEach((c,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='scan-cand'; b.setAttribute('aria-pressed','false');
+          const im=document.createElement('img'); im.alt=''; im.loading='lazy'; im.src=(c.images&&c.images.small)||'';
+          const sp=document.createElement('span'); const nm=document.createElement('b'); nm.textContent=`${c.name} · ${c.number}/${c.set&&c.set.printedTotal}`;
+          const st=document.createElement('small'); st.textContent=(c.set&&c.set.name)||'';
+          sp.append(nm,st);
+          const tp=c.cardmarket&&c.cardmarket.prices&&c.cardmarket.prices.trendPrice;
+          if(tp){ const pr=document.createElement('small'); pr.textContent=`Tendance Cardmarket : ${eur(tp)} · relevée le ${String(c.cardmarket.updatedAt||'').replace(/\//g,'-')}${fresh(c)?'':' (ancienne, à vérifier)'}`; sp.append(pr); }
+          b.append(im,sp);
+          b.addEventListener('click',()=>{ chosen=c; list.querySelectorAll('.scan-cand').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); });
+          list.append(b); if(i===0 && cands.length===1){ chosen=c; b.setAttribute('aria-pressed','true'); } });
+        out.append(list);
+      } else if(p.number){ const w=document.createElement('span'); w.className='scan-warn'; w.textContent= lookupErr ? 'La base de cartes Pokémon ne répond pas. Le nom et le numéro restent utilisables.' : 'Aucune carte trouvée avec ce numéro. Vérifie le numéro lu.'; out.append(w); }
+    }
+    // Actions
+    const acts=document.createElement('div'); acts.className='scan-acts';
+    const use=document.createElement('button'); use.type='button'; use.className='btn primary'; use.textContent='Remplir le formulaire';
+    use.addEventListener('click',()=>{
+      const nm=nameI.value.trim() || (chosen&&chosen.name) || '';
+      const num=numI.value.trim();
+      const setName= chosen&&chosen.set&&chosen.set.name;
+      const lib=[nm, num].filter(Boolean).join(' ') + (setName?` (${setName})`:'');
+      if(lib) $('g-lib').value=lib.slice(0,80);
+      const cm=chosen&&chosen.cardmarket&&chosen.cardmarket.url;
+      if(cm && cmOk(cm) && !$('g-lien').value) $('g-lien').value=cm;
+      const tp=chosen&&chosen.cardmarket&&chosen.cardmarket.prices&&chosen.cardmarket.prices.trendPrice;
+      S.scanCote = (tp && fresh(chosen)) ? cents(tp) : null;
+      if(S.scanCote && S.sens==='obtenu' && !$('g-cote').value) $('g-cote').value=S.scanCote;
+      scanClose(); $('g-lib').focus();
+    });
+    const link=document.createElement('a'); link.className='cm'; link.target='_blank'; link.rel='noopener noreferrer'; link.textContent='Chercher sur Cardmarket ↗';
+    const updLink=()=>{ const cm=chosen&&chosen.cardmarket&&chosen.cardmarket.url; link.href = cm || cmSearch(game, [nameI.value.trim(), game==='onepiece'?numI.value.trim():''].filter(Boolean).join(' ') || numI.value.trim()); };
+    updLink(); [nameI,numI].forEach(i=>i.addEventListener('input',updLink)); out.addEventListener('click',()=>setTimeout(updLink,0));
+    const again=document.createElement('label'); again.className='btn'; again.htmlFor='scan-file-cam'; again.textContent='Reprendre une photo';
+    const close=document.createElement('button'); close.type='button'; close.className='btn'; close.textContent='Fermer'; close.addEventListener('click',scanClose);
+    acts.append(use, link, again, close); out.append(acts);
+    if(game==='pokemon' && cands.length && !chosen){ const n=document.createElement('span'); n.className='hint'; n.textContent='Choisis la bonne carte dans la liste pour remplir aussi l’extension et le lien Cardmarket.'; out.append(n); }
+  }
 
   // ---- Stockage local (dans l'appareil), même interface que l'ancienne base
   const STORE_KEY='monstock-data-v1', BACKUP_KEY='monstock-last-backup';
