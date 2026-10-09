@@ -11,6 +11,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Mon Stock">
+<script>if(location.protocol==="http:"&&location.hostname==="stock.philoudng.fr")location.replace("https://"+location.host+location.pathname+location.search+location.hash);</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -452,8 +453,9 @@ td.zero{color:var(--muted)}
       <p class="hint" id="bk-msg" hidden></p>
     </section>
     <details id="footer-details">
-      <summary>Version 33 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 34 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v34</span><span>Redirection automatique vers l&#x27;adresse sécurisée (https).</span></li>
         <li><span class="v">v33</span><span>Version indépendante sur stock.philoudng.fr : données dans l&#x27;appareil, sauvegarde et restauration, installable sur l&#x27;écran d&#x27;accueil.</span></li>
         <li><span class="v">v32</span><span>Scan de carte retiré pour l&#x27;instant (indisponible sur téléphone).</span></li>
         <li><span class="v">v31</span><span>Scan : version du moteur mise à jour et détail technique affiché si indisponible.</span></li>
