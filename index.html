@@ -488,8 +488,9 @@ td.zero{color:var(--muted)}
       <p class="hint" id="bk-msg" hidden></p>
     </section>
     <details id="footer-details">
-      <summary>Version 36 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 37 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v37</span><span>Mises à jour du site récupérées tout de suite (plus de vieille version gardée en mémoire).</span></li>
         <li><span class="v">v36</span><span>Filtres Tout / Achats / Obtenus / Ventes du registre : affichage réparé.</span></li>
         <li><span class="v">v35</span><span>Scan de carte : lecture du texte dans le téléphone, recherche dans la base Pokémon (extension, image, tendance Cardmarket).</span></li>
         <li><span class="v">v34</span><span>Redirection automatique vers l&#x27;adresse sécurisée (https).</span></li>
@@ -1578,7 +1579,7 @@ td.zero{color:var(--muted)}
   renderBackup();
 
   // ---- Application installable (fonctionne hors connexion)
-  if('serviceWorker' in navigator && location.protocol==='https:'){ window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
+  if('serviceWorker' in navigator && location.protocol==='https:'){ window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{ try{ r.update(); }catch(e){} }).catch(()=>{}); }); }
 })();
 </script>
 
