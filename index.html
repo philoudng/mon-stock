@@ -175,11 +175,11 @@ mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 1px
 /* Scanner en direct (cadre carte + zone du numéro) */
 .cam{position:fixed;inset:0;z-index:80;background:#000;color:#fff;overflow:hidden;touch-action:none}
 .cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.cam-frame{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);width:min(78vw,calc((100vh - 230px) * 63 / 88),460px);aspect-ratio:63/88;border:3px dashed rgba(255,255,255,.95);border-radius:5%/3.6%;box-shadow:0 0 0 100vmax rgba(0,0,0,.6)}
+.cam-frame{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);width:min(88vw,calc((100vh - 190px) * 63 / 88),540px);aspect-ratio:63/88;border:3px dashed rgba(255,255,255,.95);border-radius:5%/3.6%;box-shadow:0 0 0 100vmax rgba(0,0,0,.6)}
 .cam-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--f-body);font-weight:700;font-size:clamp(1.1rem,4.6vw,1.6rem);letter-spacing:.02em;text-transform:uppercase;text-shadow:0 1px 8px rgba(0,0,0,.8);transition:opacity .3s;pointer-events:none}
 .cam.live .cam-hint{opacity:.85}
-.cam-zone{position:absolute;border:3px solid #d9747a;border-radius:10px;background:rgba(217,116,122,.12)}
-.cam-pill{position:absolute;bottom:calc(100% + 14px);white-space:nowrap;background:#d9747a;color:#fff;font-family:var(--f-body);font-weight:700;font-size:clamp(.78rem,3.4vw,1.05rem);letter-spacing:.03em;text-transform:uppercase;border-radius:14px;padding:.5em .9em;display:flex;gap:.6em;align-items:center}
+.cam-zone{position:absolute;border:2px solid #d9747a;border-radius:6px;background:rgba(217,116,122,.12)}
+.cam-pill{position:absolute;bottom:calc(100% + 10px);white-space:nowrap;background:#d9747a;color:#fff;font-family:var(--f-body);font-weight:700;font-size:clamp(.78rem,3.4vw,1.05rem);letter-spacing:.03em;text-transform:uppercase;border-radius:14px;padding:.5em .9em;display:flex;gap:.6em;align-items:center}
 .cam-zone.right .cam-pill{right:-3px} .cam-zone.left .cam-pill{left:-3px} .cam-zone.center .cam-pill{left:50%;transform:translateX(-50%)}
 .cam-pill b{font-weight:700;opacity:.75}
 .cam.found .cam-zone{border-color:#5ccb94;background:rgba(92,203,148,.18)}
@@ -542,8 +542,9 @@ td.zero{color:var(--muted)}
       <p class="hint" id="bk-msg" hidden></p>
     </section>
     <details id="footer-details">
-      <summary>Version 40 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 41 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v41</span><span>Scanner : cadre de la carte plus grand et zone du numéro (rose) réduite à la taille réelle du numéro imprimé.</span></li>
         <li><span class="v">v40</span><span>Illustrations : grande image de la carte reconnue après le scan (touchable pour l&#x27;agrandir), vignette dans le registre, et registre plus lisible sur téléphone.</span></li>
         <li><span class="v">v39</span><span>Listes de cartes Pokémon (noms français) et One Piece intégrées : après le scan, la carte s&#x27;affiche avec son image, son extension et ses versions.</span></li>
         <li><span class="v">v38</span><span>Scanner en direct : cadre de carte et zone du numéro, lecture automatique dès que le numéro est reconnu.</span></li>
@@ -1640,10 +1641,11 @@ td.zero{color:var(--muted)}
 
   // ---- Scanner en direct : cadre de carte + lecture continue de la zone du numéro
   const CAM_ZONES={
-    onepiece:{x:.545,y:.885,w:.425,h:.095,side:'right',ex:'OP01-001'},
-    pokemon:{x:.03,y:.895,w:.47,h:.085,side:'left',ex:'199/165'},
-    lorcana:{x:.03,y:.895,w:.5,h:.085,side:'left',ex:'123/204'},
-    other:{x:.04,y:.87,w:.92,h:.11,side:'center',ex:''}
+    // Position réelle du numéro imprimé, en proportion de la carte (63 × 88 mm)
+    onepiece:{x:.6,y:.925,w:.36,h:.055,side:'right',ex:'OP01-001'},
+    pokemon:{x:.04,y:.925,w:.38,h:.055,side:'left',ex:'199/165'},
+    lorcana:{x:.04,y:.925,w:.4,h:.055,side:'left',ex:'123/204'},
+    other:{x:.05,y:.9,w:.9,h:.08,side:'center',ex:''}
   };
   let camStream=null, camRun=0, camBusy=false;
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -1656,6 +1658,8 @@ td.zero{color:var(--muted)}
     for(let i=0;i<a.length;i+=4){ let y=a[i]; if(inv) y=255-y; y=(y-128)*1.5+128; y=y<0?0:y>255?255:y; a[i]=a[i+1]=a[i+2]=y; }
     g.putImageData(d,0,0); return c;
   }
+  // marge de tolérance : on lit un peu autour du cadre rose si la carte est légèrement décalée
+  function padZone(z){ const px=z.w*.12, py=z.h*.35; const x=Math.max(0,z.x-px), y=Math.max(0,z.y-py); return {x, y, w:Math.min(1-x, z.w+2*px), h:Math.min(1-y, z.h+2*py)}; }
   function camGrab(rel){
     const v=$('cam-video'), fr=$('cam-frame').getBoundingClientRect(), vr=v.getBoundingClientRect();
     if(!v.videoWidth) return null;
@@ -1718,7 +1722,7 @@ td.zero{color:var(--muted)}
     while(run===camRun){
       const t0=Date.now();
       try{
-        const crop=camGrab(z);
+        const crop=camGrab(padZone(z));
         if(crop && !camBusy){
           camBusy=true;
           await w.setParameters({tessedit_char_whitelist:'0123456789/-OPSTEBR ', tessedit_pageseg_mode:'7'});
@@ -1748,7 +1752,7 @@ td.zero{color:var(--muted)}
   $('cam-shot').addEventListener('click',async()=>{
     // Photo manuelle : on tente quand même de lire le numéro dans la zone
     const game=S.game, z=CAM_ZONES[game]||CAM_ZONES.other; let num=null;
-    const crop=camGrab(z);
+    const crop=camGrab(padZone(z));
     if(crop && tessWorker && !camBusy){ try{ await tessWorker.setParameters({tessedit_char_whitelist:'0123456789/-OPSTEBR ', tessedit_pageseg_mode:'7'}); const {data}=await tessWorker.recognize(contrastCopy(crop, Math.max(1,Math.min(4,140/crop.height)))); num=matchNumber(data&&data.text, game); }catch(e){} }
     camCaptureAndRead(num);
   });
