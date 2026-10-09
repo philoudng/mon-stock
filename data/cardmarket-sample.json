@@ -1,0 +1,202 @@
+{
+ "fields": [
+  "categoryName",
+  "dateAdded",
+  "idCategory",
+  "idExpansion",
+  "idMetacard",
+  "idProduct",
+  "name"
+ ],
+ "OP05-119": [
+  {
+   "idProduct": 733461,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 5481,
+   "idMetacard": 424975,
+   "dateAdded": "2023-09-19 03:14:29"
+  },
+  {
+   "idProduct": 733462,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 5481,
+   "idMetacard": 424975,
+   "dateAdded": "2023-09-19 03:14:45"
+  },
+  {
+   "idProduct": 733463,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 5481,
+   "idMetacard": 424975,
+   "dateAdded": "2023-09-19 03:15:02"
+  },
+  {
+   "idProduct": 747876,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 5426,
+   "idMetacard": 424975,
+   "dateAdded": "2023-12-04 09:56:24"
+  },
+  {
+   "idProduct": 747877,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 5426,
+   "idMetacard": 424975,
+   "dateAdded": "2023-12-04 09:56:40"
+  },
+  {
+   "idProduct": 747878,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 5426,
+   "idMetacard": 424975,
+   "dateAdded": "2023-12-04 09:56:54"
+  },
+  {
+   "idProduct": 781127,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 5804,
+   "idMetacard": 424975,
+   "dateAdded": "2024-07-30 02:39:13"
+  },
+  {
+   "idProduct": 786297,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 5887,
+   "idMetacard": 424975,
+   "dateAdded": "2024-09-03 23:16:28"
+  },
+  {
+   "idProduct": 799348,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 5805,
+   "idMetacard": 424975,
+   "dateAdded": "2024-11-07 16:03:43"
+  },
+  {
+   "idProduct": 799349,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 5805,
+   "idMetacard": 424975,
+   "dateAdded": "2024-11-07 16:03:57"
+  },
+  {
+   "idProduct": 799350,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 5805,
+   "idMetacard": 424975,
+   "dateAdded": "2024-11-07 16:04:16"
+  },
+  {
+   "idProduct": 802854,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 5755,
+   "idMetacard": 424975,
+   "dateAdded": "2024-12-05 11:36:44"
+  },
+  {
+   "idProduct": 804874,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 5510,
+   "idMetacard": 424975,
+   "dateAdded": "2025-01-07 06:52:34"
+  },
+  {
+   "idProduct": 817345,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 6034,
+   "idMetacard": 424975,
+   "dateAdded": "2025-03-14 13:35:48"
+  },
+  {
+   "idProduct": 817346,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 6034,
+   "idMetacard": 424975,
+   "dateAdded": "2025-03-14 13:35:58"
+  },
+  {
+   "idProduct": 827268,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 6033,
+   "idMetacard": 424975,
+   "dateAdded": "2025-05-27 15:25:09"
+  },
+  {
+   "idProduct": 827269,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 6033,
+   "idMetacard": 424975,
+   "dateAdded": "2025-05-27 15:25:23"
+  },
+  {
+   "idProduct": 830642,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 5303,
+   "idMetacard": 424975,
+   "dateAdded": "2025-06-26 11:17:03"
+  },
+  {
+   "idProduct": 877587,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 5804,
+   "idMetacard": 424975,
+   "dateAdded": "2026-03-13 19:09:29"
+  },
+  {
+   "idProduct": 877588,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 5804,
+   "idMetacard": 424975,
+   "dateAdded": "2026-03-13 19:10:37"
+  },
+  {
+   "idProduct": 894883,
+   "name": "Monkey.D.Luffy (OP05-119)",
+   "idCategory": 1621,
+   "categoryName": "One Piece Single",
+   "idExpansion": 6625,
+   "idMetacard": 424975,
+   "dateAdded": "2026-06-24 01:45:22"
+  }
+ ]
+}
