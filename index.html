@@ -195,6 +195,28 @@ mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 1px
 .cam-err{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(86vw,420px);background:#1b1b1b;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px;text-align:center;z-index:2}
 .cam-err .btn{justify-content:center}
 @media (prefers-reduced-motion:reduce){ .cam-hint{transition:none} }
+.scan-hero{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.scan-hero .hero-img{width:min(62vw,240px);aspect-ratio:63/88;border-radius:4.5%/3.2%;object-fit:cover;background:var(--line);box-shadow:0 8px 28px rgba(0,0,0,.28);cursor:zoom-in;border:0;padding:0}
+.scan-hero .hero-img img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}
+.scan-hero strong{font-family:var(--f-display);font-weight:500;font-size:1.1rem;overflow-wrap:anywhere}
+.scan-hero small{color:var(--muted);font-size:.8rem}
+.scan-hero .mine{display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--muted)}
+.scan-hero .mine img{width:34px;height:47px;object-fit:cover;border-radius:4px}
+.scan-cand img{width:52px!important;height:72px!important}
+.scan-cand{grid-template-columns:52px 1fr!important}
+.name.withthumb{display:flex;gap:10px;align-items:flex-start}
+.thumb{flex:none;width:38px;height:53px;border-radius:4px;overflow:hidden;background:var(--line);border:0;padding:0;cursor:zoom-in}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.lightbox{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);cursor:zoom-out}
+.lightbox img{max-width:min(92vw,520px);max-height:80vh;border-radius:3.5%/2.5%;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+.lightbox p{color:#fff;margin:0;font-weight:600;text-align:center}
+.name.withthumb > span{flex:1;min-width:0}
+@media (max-width:560px){
+  .item{grid-template-columns:minmax(0,1fr) auto}
+  .item .amt{grid-row:1 / span 2;grid-column:2}
+  .item .meta{grid-row:2}
+  .item .ops{grid-row:3;grid-column:1 / -1;justify-content:flex-start;margin-left:-7px}
+}
 .namebtn{font:inherit;font-weight:600;color:var(--fg);background:none;border:0;padding:0;text-align:left;cursor:pointer;overflow-wrap:anywhere}
 .namebtn:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
 .sell-edit{background:var(--accent-soft)}
@@ -520,8 +542,9 @@ td.zero{color:var(--muted)}
       <p class="hint" id="bk-msg" hidden></p>
     </section>
     <details id="footer-details">
-      <summary>Version 39 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 40 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v40</span><span>Illustrations : grande image de la carte reconnue après le scan (touchable pour l&#x27;agrandir), vignette dans le registre, et registre plus lisible sur téléphone.</span></li>
         <li><span class="v">v39</span><span>Listes de cartes Pokémon (noms français) et One Piece intégrées : après le scan, la carte s&#x27;affiche avec son image, son extension et ses versions.</span></li>
         <li><span class="v">v38</span><span>Scanner en direct : cadre de carte et zone du numéro, lecture automatique dès que le numéro est reconnu.</span></li>
         <li><span class="v">v37</span><span>Mises à jour du site récupérées tout de suite (plus de vieille version gardée en mémoire).</span></li>
@@ -1038,7 +1061,7 @@ td.zero{color:var(--muted)}
         {label:'Vendre', fn:openSell},
         {label: lc ? 'Màj cote' : '+ Cote', fn:()=>{ S.coteFor=t._id; S.sellFor=null; render(); setTimeout(()=>{ const i=$('cote-input'); if(i) i.focus(); },0); }}];
       const row = v ? trade : S.sellFor===t._id ? sellEditor(t, rem) : S.coteFor===t._id ? coteEditor(t) : null;
-      return item({e:t, name:t.libelle, onName:(!v && rem>0)?openSell:null, meta, cap:v?'Encaissé':t.obtenu?'Sans dépense':'Dépense', amt: t.obtenu ? (lc ? '≈ '+eur(lc.prix*rem) : 'Gratuit') : (v?'+':'−')+eur(t.montant), amtCls:v?'pos':t.obtenu?'':'neg', sub, subCls, stopped:!v&&rem===0, edit:()=>editTcg(t), extra, row});
+      return item({e:t, name:t.libelle, onName:(!v && rem>0)?openSell:null, thumb:Array.isArray(t.img)?t.img:(t.img?[t.img]:null), meta, cap:v?'Encaissé':t.obtenu?'Sans dépense':'Dépense', amt: t.obtenu ? (lc ? '≈ '+eur(lc.prix*rem) : 'Gratuit') : (v?'+':'−')+eur(t.montant), amtCls:v?'pos':t.obtenu?'':'neg', sub, subCls, stopped:!v&&rem===0, edit:()=>editTcg(t), extra, row});
     }, g=>{ const i=g.filter(x=>x.sens==='vente').reduce((s,x)=>s+x.montant,0), o=g.filter(x=>x.sens==='achat').reduce((s,x)=>s+x.montant,0)+g.reduce((s,x)=>s+implicitCost(x),0); return `Dépensé ${eur(o)} · Vendu ${eur(i)} · Net ${sgn(i-o)}`; });
   }
 
@@ -1205,6 +1228,7 @@ td.zero{color:var(--muted)}
       const d={kind:'tcg', jeu:t.jeu, sens:'vente', libelle:t.libelle, pu, qte:q, montant:cents(pu*q), cpu, cout:cents(cpu*q),
                plateforme:plat.value.trim(), date:date.value||todayISO(), achatId:t._id, createdAt:Date.now()};
       if(t.lien) d.lien=t.lien;
+      if(t.img) d.img=t.img;
       payFields(d, smoyen, scompte); rememberPay('vente', smoyen.value, scompte.value);
       ok.disabled=true;
       if(await save(null,d)){ S.sellFor=null; render(); } else { ok.disabled=false; }
@@ -1235,10 +1259,13 @@ td.zero{color:var(--muted)}
     box.append(p,lab,ok,no); return box;
   }
 
-  function item({e,name,onName,meta,cap,amt,sub,subCls,amtCls,stopped,edit,extra=[],row=null}){
+  function item({e,name,onName,thumb,meta,cap,amt,sub,subCls,amtCls,stopped,edit,extra=[],row=null}){
     const li=document.createElement('li'); li.className='item'+(stopped?' stopped':'');
     const n=document.createElement('div'); n.className='name';
-    if(onName){ const b=document.createElement('button'); b.type='button'; b.className='namebtn'; b.textContent=name; b.title='Enregistrer une vente'; b.addEventListener('click',onName); n.append(b); } else n.textContent=name;
+    let nt=n;
+    if(thumb && thumb.length){ n.classList.add('withthumb'); const tb=document.createElement('button'); tb.type='button'; tb.className='thumb'; tb.setAttribute('aria-label','Voir l’illustration');
+      tb.append(cardImg(thumb, '')); tb.addEventListener('click',()=>openLightbox(thumb.map(u=>u.replace('/low.webp','/high.webp')).concat(thumb), name)); nt=document.createElement('span'); n.append(tb, nt); }
+    if(onName){ const b=document.createElement('button'); b.type='button'; b.className='namebtn'; b.textContent=name; b.title='Enregistrer une vente'; b.addEventListener('click',onName); nt.append(b); } else nt.textContent=name;
     const m=document.createElement('div'); m.className='meta'; m.append(...meta);
     const a=document.createElement('div'); a.className='amt'+(amtCls?' '+amtCls:'');
     if(cap){ const c=document.createElement('span'); c.className='cap'; c.textContent=cap; a.append(c); }
@@ -1323,7 +1350,7 @@ td.zero{color:var(--muted)}
   $('tcg-search').addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.target.value=''; S.tcgQuery=''; render(); } });
   $('tcg-search-clear').addEventListener('click',()=>{ $('tcg-search').value=''; S.tcgQuery=''; render(); $('tcg-search').focus(); });
   $('s-achat').addEventListener('click',()=>setSens('achat')); $('s-obtenu').addEventListener('click',()=>setSens('obtenu')); $('s-vente').addEventListener('click',()=>setSens('vente'));
-  function resetTcg(){ fG.reset(); S.editing.tcg=null; S.scanCote=null; $('g-date').value=todayISO(); setSens(S.sens); setEditing('tcg',fG,$('f-tcg-title'),`Nouveau mouvement ${gameName(S.game)}`,null); showMsg(fG); }
+  function resetTcg(){ fG.reset(); S.editing.tcg=null; S.scanCote=null; S.scanImg=null; $('g-date').value=todayISO(); setSens(S.sens); setEditing('tcg',fG,$('f-tcg-title'),`Nouveau mouvement ${gameName(S.game)}`,null); showMsg(fG); }
   function editTcg(t){ S.editing.tcg=t._id; setSens(t.obtenu?'obtenu':t.sens); $('g-cote').value = lastCote(t) ? lastCote(t).prix : ''; fillMoyens($('g-moyen'),t.sens,t.moyen||''); fillComptes($('g-compte'),t.compteId||''); $('g-lib').value=t.libelle||''; $('g-montant').value= Array.isArray(t.prix)&&t.prix.length>1 ? t.prix.map(fmtNum).join('+') : fmtNum(cents(puOf(t))); $('g-qte').value=qteOf(t); syncG(); $('g-cout').value=typeof t.cpu==='number'?t.cpu:(typeof t.cout==='number'?cents(t.cout/qteOf(t)):''); $('g-plat').value=t.plateforme||''; $('g-date').value=t.date||todayISO(); $('g-cdate').value=t.cdate||''; $('g-lien').value=t.lien||'';
     setEditing('tcg',fG,$('f-tcg-title'),'',t._id); $('g-lib').focus(); }
   fG.querySelector('[data-cancel]').addEventListener('click',resetTcg);
@@ -1338,6 +1365,7 @@ td.zero{color:var(--muted)}
       if($('g-cote').value!==''){ const e={date:todayISO(), prix:cents(num($('g-cote').value))}; const last=cs[cs.length-1];
         if(!last || last.prix!==e.prix){ if(last && last.date===e.date) cs[cs.length-1]=e; else cs.push(e); } }
       if(cs.length) d.cotes=cs.slice(-60);
+      if(S.scanImg && S.scanImg.length) d.img=S.scanImg; else if(prev && prev.img) d.img=prev.img;
       if(await save(id,d,fG)) resetTcg();
       return;
     }
@@ -1352,6 +1380,7 @@ td.zero{color:var(--muted)}
     if(lien){ if(!cmOk(lien)){ showMsg(fG,'Le lien doit être une adresse https://…cardmarket.com/… copiée depuis la fiche de la carte.'); return; } d.lien=lien; }
     if(prev && Array.isArray(prev.cotes)) d.cotes=prev.cotes;
     if(!d.cotes && S.scanCote && S.sens==='achat') d.cotes=[{date:todayISO(), prix:S.scanCote}];
+    if(S.scanImg && S.scanImg.length) d.img=S.scanImg; else if(prev && prev.img) d.img=prev.img;
     if(prev && prev.achatId) d.achatId=prev.achatId;
     payFields(d,$('g-moyen'),$('g-compte'));
     if(await save(id,d,fG)){ if(!id) rememberPay(S.sens,$('g-moyen').value,$('g-compte').value); resetTcg(); }
@@ -1429,6 +1458,24 @@ td.zero{color:var(--muted)}
     }
     return {number, code, names, ref: game==='onepiece' ? (code||number) : (number||code)};
   }
+  // ---- Illustrations : image avec repli, visionneuse plein écran
+  function cardImg(srcs, alt){
+    const list=(Array.isArray(srcs)?srcs:[srcs]).filter(Boolean); const im=document.createElement('img');
+    im.alt=alt||''; im.loading='lazy'; im.decoding='async'; im.referrerPolicy='no-referrer'; let k=0; im.src=list[0]||'';
+    im.addEventListener('error',()=>{ k++; if(k<list.length) im.src=list[k]; else im.style.visibility='hidden'; });
+    if(!list.length) im.style.visibility='hidden';
+    return im;
+  }
+  function openLightbox(srcs, caption){
+    const lb=document.createElement('div'); lb.className='lightbox'; lb.setAttribute('role','dialog'); lb.setAttribute('aria-label','Illustration');
+    const im=cardImg(srcs, caption||''); im.loading='eager'; lb.append(im);
+    if(caption){ const p=document.createElement('p'); p.textContent=caption; lb.append(p); }
+    const close=()=>{ lb.remove(); document.removeEventListener('keydown',onKey); };
+    const onKey=e=>{ if(e.key==='Escape') close(); };
+    lb.addEventListener('click',close); document.addEventListener('keydown',onKey); document.body.append(lb);
+  }
+  function opImgs(id, primary){ return [primary, `https://en.onepiece-cardgame.com/images/cardlist/card/${id}.png`, `https://fr.onepiece-cardgame.com/images/cardlist/card/${id}.webp`, `https://optcgapi.com/media/static/Card_Images/${id}.jpg`]; }
+
   // ---- Bases de cartes (fichiers du site, disponibles hors connexion)
   const DB={};
   async function loadDB(name){ if(!DB[name]) DB[name]=fetch(`data/${name}.json`).then(r=>{ if(!r.ok) throw new Error('db'); return r.json(); }).catch(e=>{ delete DB[name]; throw e; }); return DB[name]; }
@@ -1443,7 +1490,8 @@ td.zero{color:var(--muted)}
       const db=await loadDB('pokemon'); const list=db[key]||[];
       return list.map((c,i)=>({ key:key+'#'+i, name:c.f||c.e, alt:c.e, num:ref.replace(/\s/g,''), setName:c.s, setAbbr:c.a, rarity:c.r,
         title:`${c.f||c.e} · ${ref.replace(/\s/g,'')}`, sub:[c.s+(c.a?` (${c.a})`:''), c.r].filter(Boolean).join(' · '),
-        img:c.i, img2: c.p ? `https://images.pokemontcg.io/${c.p.replace(/-([^-]+)$/,'/$1')}.png` : '',
+        imgs:[c.i.replace('/low.webp','/high.webp'), c.i, c.p ? `https://images.pokemontcg.io/${c.p.replace(/-([^-]+)$/,'/$1')}_hires.png` : '', c.p ? `https://images.pokemontcg.io/${c.p.replace(/-([^-]+)$/,'/$1')}.png` : ''].filter(Boolean),
+        thumbs:[c.i, c.p ? `https://images.pokemontcg.io/${c.p.replace(/-([^-]+)$/,'/$1')}.png` : ''].filter(Boolean),
         link: c.p ? `https://prices.pokemontcg.io/cardmarket/${c.p}` : '', ptcg:c.p||'' }));
     }
     if(game==='onepiece'){
@@ -1452,7 +1500,7 @@ td.zero{color:var(--muted)}
       return c.v.map(v=>{ const pm=v.id.match(/_([pr])(\d+)$/); const vl = pm ? (pm[1]==='p' ? `alt. ${pm[2]}` : `réimpr. ${pm[2]}`) : '';
         return { key:v.id, name, alt:c.n, num:key, setName:v.s, rarity:c.r, variant:vl,
           title:`${name} · ${key}${vl?` · ${vl}`:''}`, sub:[v.s, c.r, pm?(pm[1]==='p'?'illustration alternative':'réimpression'):''].filter(Boolean).join(' · '),
-          img:v.i, img2:'', link:'' }; });
+          imgs:opImgs(v.id, v.i), thumbs:opImgs(v.id, v.i), link:'' }; });
     }
     return [];
   }
@@ -1510,6 +1558,20 @@ td.zero{color:var(--muted)}
     const title=document.createElement('strong'); title.textContent='Résultat du scan'; info.append(title);
     if(!p.names.length && !p.ref){ const w=document.createElement('span'); w.className='scan-warn'; w.textContent='Aucun texte lisible. Reprends la photo de face, bien éclairée, carte entière.'; info.append(w); }
     top.append(img, info); out.append(top);
+    // Grande illustration de la carte reconnue
+    const hero=document.createElement('div'); hero.className='scan-hero'; hero.hidden=true; out.append(hero);
+    const photoSrc=img.src;
+    function showHero(c){
+      hero.replaceChildren(); if(!c){ hero.hidden=true; top.hidden=false; return; }
+      hero.hidden=false; top.hidden=true;
+      const btn=document.createElement('button'); btn.type='button'; btn.className='hero-img'; btn.setAttribute('aria-label','Agrandir l’illustration');
+      btn.append(cardImg(c.imgs, c.name)); btn.addEventListener('click',()=>openLightbox(c.imgs, `${c.name} · ${c.num}`));
+      const t=document.createElement('strong'); t.textContent=c.title;
+      const st=document.createElement('small'); st.textContent=c.sub;
+      const mine=document.createElement('span'); mine.className='mine'; const ph=document.createElement('img'); ph.src=photoSrc; ph.alt='';
+      mine.append(ph, document.createTextNode('ta photo'));
+      hero.append(btn,t,st,mine);
+    }
     const hasDB = game==='pokemon' || game==='onepiece';
     let chosen=null;
     const link=document.createElement('a'); link.className='cm'; link.target='_blank'; link.rel='noopener noreferrer'; link.textContent='Voir sur Cardmarket ↗';
@@ -1527,10 +1589,10 @@ td.zero{color:var(--muted)}
       b.addEventListener('click',()=>{ nameI.value=n; chips.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); }); chips.append(b); });
     function pick(c, btn){
       chosen=c; listBox.querySelectorAll('.scan-cand').forEach(x=>x.setAttribute('aria-pressed',String(x===btn)));
-      if(c) nameI.value=c.name; updLink();
+      if(c) nameI.value=c.name; updLink(); showHero(c);
     }
     function renderCands(list, err){
-      listBox.replaceChildren(); chosen=null;
+      listBox.replaceChildren(); chosen=null; showHero(null);
       if(!hasDB) return;
       if(!list.length){
         if(numI.value.trim()){ const w=document.createElement('span'); w.className='scan-warn';
@@ -1540,8 +1602,7 @@ td.zero{color:var(--muted)}
       const h=document.createElement('span'); h.className='hint';
       h.textContent = list.length>1 ? (game==='onepiece' ? `${list.length} versions de cette carte : touche la tienne.` : `${list.length} cartes portent ce numéro : touche la tienne.`) : 'Carte reconnue ✓'; listBox.append(h);
       list.forEach((c,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='scan-cand'; b.setAttribute('aria-pressed','false');
-        const im=document.createElement('img'); im.alt=''; im.loading='lazy'; im.referrerPolicy='no-referrer'; im.src=c.img||c.img2||'';
-        im.addEventListener('error',()=>{ if(c.img2 && im.src!==c.img2) im.src=c.img2; else im.style.visibility='hidden'; });
+        const im=cardImg(c.thumbs||c.imgs, '');
         const sp=document.createElement('span'); const nm=document.createElement('b'); nm.textContent=c.title;
         const st=document.createElement('small'); st.textContent=c.sub; sp.append(nm,st);
         const pr=document.createElement('small'); pr.className='pr'; sp.append(pr); c._pr=pr;
@@ -1566,6 +1627,7 @@ td.zero{color:var(--muted)}
       const cm=chosen&&chosen.link;
       if(cm && cmOk(cm) && !$('g-lien').value) $('g-lien').value=cm;
       S.scanCote = (chosen && chosen.price && fresh(chosen)) ? cents(chosen.price) : null;
+      S.scanImg = chosen ? (chosen.thumbs||chosen.imgs||[]).slice(0,2) : null;
       if(S.scanCote && S.sens==='obtenu' && !$('g-cote').value) $('g-cote').value=S.scanCote;
       scanClose(); $('g-lib').focus();
     });
