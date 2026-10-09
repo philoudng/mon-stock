@@ -172,6 +172,29 @@ mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 1px
 .fchip .n{font-family:var(--f-mono);font-weight:500;font-size:.75rem;opacity:.8}
 .fchip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .fchip:disabled{opacity:.45;cursor:default}
+/* Scanner en direct (cadre carte + zone du numéro) */
+.cam{position:fixed;inset:0;z-index:80;background:#000;color:#fff;overflow:hidden;touch-action:none}
+.cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cam-frame{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);width:min(78vw,calc((100vh - 230px) * 63 / 88),460px);aspect-ratio:63/88;border:3px dashed rgba(255,255,255,.95);border-radius:5%/3.6%;box-shadow:0 0 0 100vmax rgba(0,0,0,.6)}
+.cam-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--f-body);font-weight:700;font-size:clamp(1.1rem,4.6vw,1.6rem);letter-spacing:.02em;text-transform:uppercase;text-shadow:0 1px 8px rgba(0,0,0,.8);transition:opacity .3s;pointer-events:none}
+.cam.live .cam-hint{opacity:.85}
+.cam-zone{position:absolute;border:3px solid #d9747a;border-radius:10px;background:rgba(217,116,122,.12)}
+.cam-pill{position:absolute;bottom:calc(100% + 14px);white-space:nowrap;background:#d9747a;color:#fff;font-family:var(--f-body);font-weight:700;font-size:clamp(.78rem,3.4vw,1.05rem);letter-spacing:.03em;text-transform:uppercase;border-radius:14px;padding:.5em .9em;display:flex;gap:.6em;align-items:center}
+.cam-zone.right .cam-pill{right:-3px} .cam-zone.left .cam-pill{left:-3px} .cam-zone.center .cam-pill{left:50%;transform:translateX(-50%)}
+.cam-pill b{font-weight:700;opacity:.75}
+.cam.found .cam-zone{border-color:#5ccb94;background:rgba(92,203,148,.18)}
+.cam.found .cam-pill{background:#2e9c68}
+.cam.found .cam-pill b{opacity:1}
+.cam-top{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cam-top button{font:inherit;font-weight:600;color:#fff;background:rgba(255,255,255,.14);border:0;border-radius:99px;padding:8px 14px;cursor:pointer}
+.cam-status{font-size:.85rem;opacity:.9;text-align:right;text-shadow:0 1px 6px rgba(0,0,0,.8)}
+.cam-bottom{position:absolute;left:0;right:0;bottom:0;padding:12px 24px calc(env(safe-area-inset-bottom,0px) + 22px);display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
+.cam-shot{width:72px;height:72px;border-radius:50%;border:4px solid #fff;background:rgba(255,255,255,.25);cursor:pointer;justify-self:center}
+.cam-shot:active{background:rgba(255,255,255,.6)}
+.cam-alt{color:#fff;font-size:.85rem;text-decoration:underline;text-underline-offset:3px;cursor:pointer;justify-self:start;display:inline!important}
+.cam-err{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(86vw,420px);background:#1b1b1b;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px;text-align:center;z-index:2}
+.cam-err .btn{justify-content:center}
+@media (prefers-reduced-motion:reduce){ .cam-hint{transition:none} }
 .namebtn{font:inherit;font-weight:600;color:var(--fg);background:none;border:0;padding:0;text-align:left;cursor:pointer;overflow-wrap:anywhere}
 .namebtn:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
 .sell-edit{background:var(--accent-soft)}
@@ -422,7 +445,7 @@ td.zero{color:var(--muted)}
         <button type="button" id="s-vente" aria-pressed="false">Vente</button>
       </div>
       <div class="scan" id="scan-box">
-        <label class="btn" for="scan-file-cam" id="scan-cam"><span aria-hidden="true">📷</span> Scanner une carte</label>
+        <button type="button" class="btn" id="scan-cam"><span aria-hidden="true">📷</span> Scanner une carte</button>
         <label class="linkish" for="scan-file" id="scan-pick">ou importer une photo</label>
         <input type="file" id="scan-file-cam" class="vh" accept="image/*" capture="environment" aria-label="Prendre une photo de la carte">
         <input type="file" id="scan-file" class="vh" accept="image/*" aria-label="Importer une photo de la carte">
@@ -474,6 +497,15 @@ td.zero{color:var(--muted)}
     <div class="tbl-wrap"><table id="t-jeux"></table></div>
     <p class="note">Les abonnements mensuels comptent chaque mois entre leur début et leur résiliation ; les annuels comptent le mois anniversaire. La marge ne porte que sur les ventes où tu as indiqué le prix d'achat.</p>
   </section>
+  <div class="cam" id="cam" hidden role="dialog" aria-modal="true" aria-label="Scanner une carte">
+    <video id="cam-video" playsinline muted autoplay></video>
+    <div class="cam-frame" id="cam-frame">
+      <span class="cam-hint" id="cam-hint">Placez une carte</span>
+      <div class="cam-zone right" id="cam-zone"><span class="cam-pill">Numéro <b id="cam-num">OP01-001</b><span aria-hidden="true">↓</span></span></div>
+    </div>
+    <div class="cam-top"><button type="button" id="cam-close">✕ Fermer</button><span class="cam-status" id="cam-status" aria-live="polite"></span></div>
+    <div class="cam-bottom"><label class="cam-alt" for="scan-file">Importer une photo</label><button type="button" class="cam-shot" id="cam-shot" aria-label="Prendre la photo"></button><span></span></div>
+  </div>
   <footer class="foot">
     <section class="backup" aria-label="Sauvegarde">
       <div class="bk-row">
@@ -488,8 +520,9 @@ td.zero{color:var(--muted)}
       <p class="hint" id="bk-msg" hidden></p>
     </section>
     <details id="footer-details">
-      <summary>Version 37 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 38 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v38</span><span>Scanner en direct : cadre de carte et zone du numéro, lecture automatique dès que le numéro est reconnu.</span></li>
         <li><span class="v">v37</span><span>Mises à jour du site récupérées tout de suite (plus de vieille version gardée en mémoire).</span></li>
         <li><span class="v">v36</span><span>Filtres Tout / Achats / Obtenus / Ventes du registre : affichage réparé.</span></li>
         <li><span class="v">v35</span><span>Scan de carte : lecture du texte dans le téléphone, recherche dans la base Pokémon (extension, image, tendance Cardmarket).</span></li>
@@ -1409,11 +1442,11 @@ td.zero{color:var(--muted)}
   }
   function scanClose(){ scanSeq++; const o=$('scan-out'); o.hidden=true; o.replaceChildren(); }
   ['scan-file-cam','scan-file'].forEach(id=>$(id).addEventListener('change',e=>{ const f=e.target.files&&e.target.files[0]; e.target.value=''; if(f) scanCard(f); }));
-  async function scanCard(file){
+  async function scanCard(file, knownNumber){
     const my=++scanSeq, game=S.game;
     const out=$('scan-out'); out.hidden=false; out.replaceChildren();
     const top=document.createElement('div'); top.className='scan-top';
-    const img=document.createElement('img'); img.alt='Photo de la carte'; img.src=URL.createObjectURL(file);
+    const img=document.createElement('img'); img.alt='Photo de la carte'; img.src= (file instanceof Blob) ? URL.createObjectURL(file) : file.toDataURL('image/jpeg',0.75);
     const st=document.createElement('div'); st.className='scan-st';
     const msg=document.createElement('span'); msg.textContent= tessWorker ? 'Lecture de la carte…' : 'Chargement de l’outil de lecture (seulement la première fois)…';
     const bar=document.createElement('div'); bar.className='scan-bar'; const fill=document.createElement('i'); bar.append(fill);
@@ -1422,11 +1455,13 @@ td.zero{color:var(--muted)}
     $('scan-cam').classList.add('busy');
     scanProgress = m=>{ if(my!==scanSeq) return; if(m.status==='recognizing text'){ msg.textContent='Lecture de la carte…'; fill.style.width=Math.round((m.progress||0)*100)+'%'; } else if(m.progress!=null){ fill.style.width=Math.round(m.progress*100)+'%'; } };
     try{
-      const [w, canvas]=await Promise.all([getWorker(), prepImage(file)]);
+      const [w, canvas]=await Promise.all([getWorker(), (file instanceof Blob) ? prepImage(file) : Promise.resolve(contrastCopy(file,1))]);
       if(my!==scanSeq) return;
+      try{ await w.setParameters({tessedit_char_whitelist:'', tessedit_pageseg_mode:'3'}); }catch(e){}
       const { data } = await w.recognize(canvas);
       if(my!==scanSeq) return;
       const parsed=parseCard(data && data.text, game);
+      if(knownNumber){ if(/^[A-Z]/.test(knownNumber)) parsed.code=knownNumber; else parsed.number=knownNumber; parsed.ref=knownNumber; }
       let cands=[], lookupErr=false;
       if(game==='pokemon' && parsed.number){ msg.textContent='Recherche de la carte…'; try{ cands=await pokeLookup(parsed.number); }catch(e){ lookupErr=true; } }
       if(my!==scanSeq) return;
@@ -1499,6 +1534,124 @@ td.zero{color:var(--muted)}
     acts.append(use, link, again, close); out.append(acts);
     if(game==='pokemon' && cands.length && !chosen){ const n=document.createElement('span'); n.className='hint'; n.textContent='Choisis la bonne carte dans la liste pour remplir aussi l’extension et le lien Cardmarket.'; out.append(n); }
   }
+
+  // ---- Scanner en direct : cadre de carte + lecture continue de la zone du numéro
+  const CAM_ZONES={
+    onepiece:{x:.545,y:.885,w:.425,h:.095,side:'right',ex:'OP01-001'},
+    pokemon:{x:.03,y:.895,w:.47,h:.085,side:'left',ex:'199/165'},
+    lorcana:{x:.03,y:.895,w:.5,h:.085,side:'left',ex:'123/204'},
+    other:{x:.04,y:.87,w:.92,h:.11,side:'center',ex:''}
+  };
+  let camStream=null, camRun=0, camBusy=false;
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  function contrastCopy(src, scale){
+    const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(src.width*scale)); c.height=Math.max(1,Math.round(src.height*scale));
+    const g=c.getContext('2d'); g.imageSmoothingQuality='high'; g.drawImage(src,0,0,c.width,c.height);
+    const d=g.getImageData(0,0,c.width,c.height), a=d.data; let sum=0;
+    for(let i=0;i<a.length;i+=4){ const y=0.299*a[i]+0.587*a[i+1]+0.114*a[i+2]; a[i]=y; sum+=y; }
+    const inv = sum/(a.length/4) < 110; // texte clair sur fond sombre -> inverser
+    for(let i=0;i<a.length;i+=4){ let y=a[i]; if(inv) y=255-y; y=(y-128)*1.5+128; y=y<0?0:y>255?255:y; a[i]=a[i+1]=a[i+2]=y; }
+    g.putImageData(d,0,0); return c;
+  }
+  function camGrab(rel){
+    const v=$('cam-video'), fr=$('cam-frame').getBoundingClientRect(), vr=v.getBoundingClientRect();
+    if(!v.videoWidth) return null;
+    const s=Math.max(vr.width/v.videoWidth, vr.height/v.videoHeight);
+    const ox=vr.left+(vr.width-v.videoWidth*s)/2, oy=vr.top+(vr.height-v.videoHeight*s)/2;
+    let sx=(fr.left+rel.x*fr.width-ox)/s, sy=(fr.top+rel.y*fr.height-oy)/s, sw=rel.w*fr.width/s, sh=rel.h*fr.height/s;
+    sx=Math.max(0,sx); sy=Math.max(0,sy); sw=Math.min(sw,v.videoWidth-sx); sh=Math.min(sh,v.videoHeight-sy);
+    const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(sw)); c.height=Math.max(1,Math.round(sh));
+    c.getContext('2d').drawImage(v,sx,sy,sw,sh,0,0,c.width,c.height); return c;
+  }
+  function matchNumber(txt, game){
+    const up=String(txt||'').toUpperCase().replace(/\s+/g,' ').replace(/0P(?=\s?\d)/g,'OP').replace(/[|\\]/g,'/');
+    const op=up.match(/\b((?:OP|ST|EB|PRB)\s?\d{2})\s*[-–]\s*(\d{3})\b/) || up.match(/\b(P)\s*[-–]\s*(\d{3})\b/);
+    const nn=up.match(/\b(\d{1,3})\s*\/\s*(\d{2,3})\b/);
+    if(game==='onepiece') return op ? op[1].replace(/\s/g,'')+'-'+op[2] : null;
+    if(game==='pokemon' || game==='lorcana') return nn ? `${nn[1]}/${nn[2]}` : null;
+    return op ? op[1].replace(/\s/g,'')+'-'+op[2] : nn ? `${nn[1]}/${nn[2]}` : null;
+  }
+  function camStatus(t){ $('cam-status').textContent=t||''; }
+  function camStop(){
+    camRun++; if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
+    const v=$('cam-video'); v.srcObject=null; $('cam').hidden=true; $('cam').classList.remove('live','found');
+    document.documentElement.style.overflow = S.monthBig ? 'hidden' : '';
+    const e=$('cam').querySelector('.cam-err'); if(e) e.remove();
+  }
+  function camError(msg){
+    const box=document.createElement('div'); box.className='cam-err';
+    const p=document.createElement('p'); p.style.margin='0'; p.textContent=msg;
+    const a=document.createElement('label'); a.className='btn primary'; a.htmlFor='scan-file-cam'; a.textContent='Prendre une photo à la place';
+    const c=document.createElement('button'); c.type='button'; c.className='btn'; c.textContent='Fermer'; c.addEventListener('click',camStop);
+    box.append(p,a,c); $('cam').append(box);
+  }
+  async function camOpen(){
+    if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){ $('scan-file-cam').click(); return; }
+    const game=S.game, z=CAM_ZONES[game]||CAM_ZONES.other, zone=$('cam-zone');
+    zone.className='cam-zone '+z.side;
+    Object.assign(zone.style,{left:(z.x*100)+'%', top:(z.y*100)+'%', width:(z.w*100)+'%', height:(z.h*100)+'%'});
+    $('cam-num').textContent=z.ex; $('cam-num').parentElement.hidden = false;
+    $('cam-hint').textContent='Placez une carte'; camStatus('Ouverture de la caméra…');
+    $('cam').hidden=false; document.documentElement.style.overflow='hidden';
+    const run=++camRun;
+    try{
+      camStream=await navigator.mediaDevices.getUserMedia({audio:false, video:{facingMode:{ideal:'environment'}, width:{ideal:1920}, height:{ideal:1080}}});
+    }catch(e){
+      if(run!==camRun) return;
+      camStatus(''); camError(e && e.name==='NotAllowedError' ? 'L’accès à la caméra a été refusé. Autorise-le dans les réglages de Safari pour ce site, ou prends une photo à la place.' : 'La caméra n’a pas pu s’ouvrir sur cet appareil.');
+      return;
+    }
+    if(run!==camRun){ camStream.getTracks().forEach(t=>t.stop()); return; }
+    const v=$('cam-video'); v.srcObject=camStream; try{ await v.play(); }catch(e){}
+    $('cam').classList.add('live');
+    camStatus(tessWorker ? 'Vise le numéro dans le cadre rose' : 'Chargement de l’outil de lecture…');
+    camLoop(run, game, z);
+  }
+  async function camLoop(run, game, z){
+    let w; try{ w=await getWorker(); }catch(e){ if(run===camRun) camStatus('L’outil de lecture n’a pas pu se charger (connexion ?). Utilise le bouton rond.'); return; }
+    if(run!==camRun) return;
+    camStatus('Vise le numéro dans le cadre rose');
+    const hits={};
+    while(run===camRun){
+      const t0=Date.now();
+      try{
+        const crop=camGrab(z);
+        if(crop && !camBusy){
+          camBusy=true;
+          await w.setParameters({tessedit_char_whitelist:'0123456789/-OPSTEBR ', tessedit_pageseg_mode:'7'});
+          const k=Math.max(1, Math.min(4, 140/crop.height));
+          const { data } = await w.recognize(contrastCopy(crop,k));
+          camBusy=false;
+          if(run!==camRun) break;
+          const m=matchNumber(data && data.text, game);
+          if(m){ hits[m]=(hits[m]||0)+1; $('cam-num').textContent=m; if(hits[m]>=2){ camFound(m); break; } }
+        }
+      }catch(e){ camBusy=false; }
+      await sleep(Math.max(120, 450-(Date.now()-t0)));
+    }
+  }
+  function camCaptureAndRead(num){
+    const full=camGrab({x:0,y:0,w:1,h:1});
+    camStop();
+    if(full) scanCard(full, num||null);
+  }
+  function camFound(num){
+    $('cam').classList.add('found'); $('cam-num').textContent=num; camStatus('Numéro trouvé ✓');
+    try{ navigator.vibrate && navigator.vibrate(40); }catch(e){}
+    setTimeout(()=>camCaptureAndRead(num), 350);
+  }
+  $('scan-cam').addEventListener('click',camOpen);
+  $('cam-close').addEventListener('click',camStop);
+  $('cam-shot').addEventListener('click',async()=>{
+    // Photo manuelle : on tente quand même de lire le numéro dans la zone
+    const game=S.game, z=CAM_ZONES[game]||CAM_ZONES.other; let num=null;
+    const crop=camGrab(z);
+    if(crop && tessWorker && !camBusy){ try{ await tessWorker.setParameters({tessedit_char_whitelist:'0123456789/-OPSTEBR ', tessedit_pageseg_mode:'7'}); const {data}=await tessWorker.recognize(contrastCopy(crop, Math.max(1,Math.min(4,140/crop.height)))); num=matchNumber(data&&data.text, game); }catch(e){} }
+    camCaptureAndRead(num);
+  });
+  $('scan-file').addEventListener('change',()=>{ if(!$('cam').hidden) camStop(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !$('cam').hidden) camStop(); });
+  document.addEventListener('visibilitychange',()=>{ if(document.hidden && !$('cam').hidden) camStop(); });
 
   // ---- Stockage local (dans l'appareil), même interface que l'ancienne base
   const STORE_KEY='monstock-data-v1', BACKUP_KEY='monstock-last-backup';
