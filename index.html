@@ -542,8 +542,9 @@ td.zero{color:var(--muted)}
       <p class="hint" id="bk-msg" hidden></p>
     </section>
     <details id="footer-details">
-      <summary>Version 43 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 44 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v44</span><span>Scan : lien Cardmarket direct de la carte rempli automatiquement, avec la tendance du jour (Pokémon et One Piece, mise à jour quotidienne).</span></li>
         <li><span class="v">v43</span><span>Scanner One Piece : zone du numéro un peu rallongée côté gauche.</span></li>
         <li><span class="v">v42</span><span>Scanner One Piece : zone du numéro raccourcie côté gauche.</span></li>
         <li><span class="v">v41</span><span>Scanner : cadre de la carte plus grand et zone du numéro (rose) réduite à la taille réelle du numéro imprimé.</span></li>
@@ -1495,17 +1496,43 @@ td.zero{color:var(--muted)}
         title:`${c.f||c.e} · ${ref.replace(/\s/g,'')}`, sub:[c.s+(c.a?` (${c.a})`:''), c.r].filter(Boolean).join(' · '),
         imgs:[c.i.replace('/low.webp','/high.webp'), c.i, c.p ? `https://images.pokemontcg.io/${c.p.replace(/-([^-]+)$/,'/$1')}_hires.png` : '', c.p ? `https://images.pokemontcg.io/${c.p.replace(/-([^-]+)$/,'/$1')}.png` : ''].filter(Boolean),
         thumbs:[c.i, c.p ? `https://images.pokemontcg.io/${c.p.replace(/-([^-]+)$/,'/$1')}.png` : ''].filter(Boolean),
-        link: c.p ? `https://prices.pokemontcg.io/cardmarket/${c.p}` : '', ptcg:c.p||'' }));
+        link: c.m ? cmProduct('Pokemon', c.m) : (c.p ? `https://prices.pokemontcg.io/cardmarket/${c.p}` : ''), cmId:c.m||null, ptcg:c.p||'' }));
     }
     if(game==='onepiece'){
       const db=await loadDB('onepiece'); const c=db[key]; if(!c) return [];
       const name=c.fr||c.n;
-      return c.v.map(v=>{ const pm=v.id.match(/_([pr])(\d+)$/); const vl = pm ? (pm[1]==='p' ? `alt. ${pm[2]}` : `réimpr. ${pm[2]}`) : '';
+      return c.v.map((v,vi)=>{ const pm=v.id.match(/_([pr])(\d+)$/); const vl = pm ? (pm[1]==='p' ? `alt. ${pm[2]}` : `réimpr. ${pm[2]}`) : '';
         return { key:v.id, name, alt:c.n, num:key, setName:v.s, rarity:c.r, variant:vl,
           title:`${name} · ${key}${vl?` · ${vl}`:''}`, sub:[v.s, c.r, pm?(pm[1]==='p'?'illustration alternative':'réimpression'):''].filter(Boolean).join(' · '),
-          imgs:opImgs(v.id, v.i), thumbs:opImgs(v.id, v.i), link:'' }; });
+          imgs:opImgs(v.id, v.i), thumbs:opImgs(v.id, v.i), link:'', vIndex:vi }; });
     }
     return [];
+  }
+  // ---- Cardmarket : liens directs + tendance du jour (fichier mis à jour chaque jour par une tâche GitHub)
+  function cmProduct(game, id){ return `https://www.cardmarket.com/fr/${game}/Products?idProduct=${id}`; }
+  let CMP=null;
+  function loadCM(){
+    if(!CMP) CMP=(async()=>{
+      for(const u of ['https://raw.githubusercontent.com/philoudng/mon-stock/main/data/cardmarket.json', 'data/cardmarket.json']){
+        try{ const r=await fetch(u,{cache:'no-cache'}); if(r.ok){ const j=await r.json(); if(j && (j.op||j.pk)) return j; } }catch(e){}
+      }
+      return null; })();
+    return CMP;
+  }
+  function setCmChoice(c, prod, date){ c.cmId=prod[0]; c.cmVer=prod[1]; c.link=cmProduct('OnePiece', prod[0]); const t=prod[2]||prod[3]; c.price=t||null; c.priceDate=t?date:null; }
+  async function cmEnrich(game, cands){
+    const cm=await loadCM();
+    if(game==='pokemon'){
+      let missing=false;
+      cands.forEach(c=>{ const v=cm&&cm.pk&&c.cmId!=null ? cm.pk[String(c.cmId)] : null; const t=v&&(v[0]||v[1]);
+        if(t){ c.price=t; c.priceDate=cm.updated; } else missing=true; });
+      if(missing) await pokePrices(cands.filter(c=>!c.price));
+      return;
+    }
+    if(game==='onepiece' && cm && cm.op){
+      cands.forEach(c=>{ const list=cm.op[c.num]; if(!list||!list.length) return; c.cmList=list; c.cmDate=cm.updated;
+        const want=(c.vIndex||0)+1; setCmChoice(c, list.find(x=>x[1]===want) || list[0], cm.updated); });
+    }
   }
   async function pokePrices(cands){
     const ids=cands.map(c=>c.ptcg).filter(Boolean).slice(0,10); if(!ids.length) return;
@@ -1574,6 +1601,16 @@ td.zero{color:var(--muted)}
       const mine=document.createElement('span'); mine.className='mine'; const ph=document.createElement('img'); ph.src=photoSrc; ph.alt='';
       mine.append(ph, document.createTextNode('ta photo'));
       hero.append(btn,t,st,mine);
+      if(c.cmList && c.cmList.length>1){
+        const lab=document.createElement('small'); lab.textContent='Version sur Cardmarket (vérifie que c’est la bonne) :';
+        const ch=document.createElement('div'); ch.className='scan-chips'; ch.style.justifyContent='center';
+        c.cmList.forEach(prod=>{ const b=document.createElement('button'); b.type='button'; const t=prod[2]||prod[3];
+          b.textContent=`V.${prod[1]}${t?` · ${eur(t)}`:''}`; b.setAttribute('aria-pressed',String(prod[0]===c.cmId));
+          b.addEventListener('click',()=>{ setCmChoice(c, prod, c.cmDate); ch.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); updLink();
+            if(c._pr) c._pr.textContent = c.price ? `Cardmarket V.${c.cmVer} : ${eur(c.price)} · tendance du ${c.priceDate}` : 'Lien Cardmarket trouvé'; });
+          ch.append(b); });
+        hero.append(lab, ch);
+      } else if(c.link && c.link.includes('cardmarket.com')){ const ok=document.createElement('small'); ok.textContent = `Lien Cardmarket trouvé${c.price?` · tendance ${eur(c.price)}`:''}`; hero.append(ok); }
     }
     const hasDB = game==='pokemon' || game==='onepiece';
     let chosen=null;
@@ -1611,7 +1648,7 @@ td.zero{color:var(--muted)}
         const pr=document.createElement('small'); pr.className='pr'; sp.append(pr); c._pr=pr;
         b.append(im,sp); b.addEventListener('click',()=>pick(c,b)); listBox.append(b);
         if(list.length===1 || (game==='onepiece' && i===0)) pick(c,b); });
-      if(game==='pokemon') pokePrices(list).then(()=>list.forEach(c=>{ if(c.price && c._pr) c._pr.textContent=`Tendance Cardmarket : ${eur(c.price)} · relevée le ${c.priceDate}${fresh(c)?'':' (ancienne, à vérifier)'}`; }));
+      cmEnrich(game, list).then(()=>{ list.forEach(c=>{ if(c._pr) c._pr.textContent = c.price ? `Cardmarket${c.cmVer?` V.${c.cmVer}`:''} : ${eur(c.price)} · tendance du ${c.priceDate}${fresh(c)?'':' (ancienne, à vérifier)'}` : (c.link&&c.link.includes('cardmarket.com')?'Lien Cardmarket trouvé':''); }); if(chosen){ updLink(); showHero(chosen); } }).catch(()=>{});
     }
     renderCands(cands, lookupErr);
     out.append(nameL); if(chips.childElementCount) out.append(chips);
@@ -1624,11 +1661,11 @@ td.zero{color:var(--muted)}
       const nm=nameI.value.trim() || (chosen&&chosen.name) || '';
       const num=numI.value.trim();
       let lib;
-      if(game==='onepiece') lib = nm + (num?` (${normNum(game,num)||num})`:'') + (chosen&&chosen.variant?` (${chosen.variant})`:'');
+      if(game==='onepiece') lib = nm + (num?` (${normNum(game,num)||num})`:'') + (chosen && chosen.cmList && chosen.cmList.length>1 && chosen.cmVer ? ` (V.${chosen.cmVer})` : (chosen&&chosen.variant?` (${chosen.variant})`:''));
       else lib = nm + (num ? ` (${[chosen&&chosen.setAbbr, num].filter(Boolean).join(' ')})` : '') + (chosen&&chosen.setName&&!(chosen.setAbbr)?` ${chosen.setName}`:'');
       if(lib.trim()) $('g-lib').value=lib.trim().slice(0,80);
       const cm=chosen&&chosen.link;
-      if(cm && cmOk(cm) && !$('g-lien').value) $('g-lien').value=cm;
+      if(cm && cmOk(cm)) $('g-lien').value=cm;
       S.scanCote = (chosen && chosen.price && fresh(chosen)) ? cents(chosen.price) : null;
       S.scanImg = chosen ? (chosen.thumbs||chosen.imgs||[]).slice(0,2) : null;
       if(S.scanCote && S.sens==='obtenu' && !$('g-cote').value) $('g-cote').value=S.scanCote;
