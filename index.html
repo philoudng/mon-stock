@@ -167,6 +167,11 @@ mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 1px
 .scan-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .scan-acts .btn{padding:7px 12px;font-size:.88rem}
 .scan-warn{color:var(--warn);font-size:.8rem}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 12px}
+.fchip{font:inherit;font-size:.82rem;font-weight:600;border:1px solid var(--line);background:var(--bg);color:var(--muted);border-radius:99px;padding:6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;-webkit-appearance:none;appearance:none}
+.fchip .n{font-family:var(--f-mono);font-weight:500;font-size:.75rem;opacity:.8}
+.fchip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.fchip:disabled{opacity:.45;cursor:default}
 .namebtn{font:inherit;font-weight:600;color:var(--fg);background:none;border:0;padding:0;text-align:left;cursor:pointer;overflow-wrap:anywhere}
 .namebtn:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
 .sell-edit{background:var(--accent-soft)}
@@ -483,8 +488,9 @@ td.zero{color:var(--muted)}
       <p class="hint" id="bk-msg" hidden></p>
     </section>
     <details id="footer-details">
-      <summary>Version 35 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 36 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v36</span><span>Filtres Tout / Achats / Obtenus / Ventes du registre : affichage réparé.</span></li>
         <li><span class="v">v35</span><span>Scan de carte : lecture du texte dans le téléphone, recherche dans la base Pokémon (extension, image, tendance Cardmarket).</span></li>
         <li><span class="v">v34</span><span>Redirection automatique vers l&#x27;adresse sécurisée (https).</span></li>
         <li><span class="v">v33</span><span>Version indépendante sur stock.philoudng.fr : données dans l&#x27;appareil, sauvegarde et restauration, installable sur l&#x27;écran d&#x27;accueil.</span></li>
