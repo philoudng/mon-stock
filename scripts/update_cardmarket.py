@@ -61,7 +61,15 @@ def main():
         pr = prices(18)
         plist = products(18)
         sample = [x for x in plist if 'OP05-119' in ' '.join(str(v) for v in x.values())][:30]
-        json.dump({'fields': sorted(plist[0].keys()) if plist else [], 'OP05-119': sample}, open(os.path.join(ROOT, 'data', 'cardmarket-sample.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+        try:
+            ns = as_list(get(f'{BASE}/productList/products_nonsingles_18.json'), 'products', 'product')
+        except Exception as e:
+            ns = [{'error': str(e)}]
+        exp_ids = sorted({x.get('idExpansion') for x in sample})
+        json.dump({'fields': sorted(plist[0].keys()) if plist else [], 'OP05-119': sample[:3],
+                   'nonsingles_count': len(ns), 'nonsingles_for_exp': {str(e): [x.get('name') for x in ns if x.get('idExpansion') == e][:6] for e in exp_ids},
+                   'nonsingles_first': ns[:5]},
+                  open(os.path.join(ROOT, 'data', 'cardmarket-sample.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
         for p in plist:
             text = ' '.join(str(v) for v in p.values() if isinstance(v, (str, int)))
             m = CODE.search(text)
