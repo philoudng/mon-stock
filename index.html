@@ -520,8 +520,9 @@ td.zero{color:var(--muted)}
       <p class="hint" id="bk-msg" hidden></p>
     </section>
     <details id="footer-details">
-      <summary>Version 38 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 39 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v39</span><span>Listes de cartes Pokémon (noms français) et One Piece intégrées : après le scan, la carte s&#x27;affiche avec son image, son extension et ses versions.</span></li>
         <li><span class="v">v38</span><span>Scanner en direct : cadre de carte et zone du numéro, lecture automatique dès que le numéro est reconnu.</span></li>
         <li><span class="v">v37</span><span>Mises à jour du site récupérées tout de suite (plus de vieille version gardée en mémoire).</span></li>
         <li><span class="v">v36</span><span>Filtres Tout / Achats / Obtenus / Ventes du registre : affichage réparé.</span></li>
@@ -1428,13 +1429,41 @@ td.zero{color:var(--muted)}
     }
     return {number, code, names, ref: game==='onepiece' ? (code||number) : (number||code)};
   }
-  async function pokeLookup(number){
-    const m=String(number).match(/^(\d{1,3})\/(\d{2,3})$/); if(!m) return [];
-    const q=`number:${parseInt(m[1],10)} set.printedTotal:${parseInt(m[2],10)}`;
-    const url=`https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(q)}&select=id,name,number,set,images,cardmarket&pageSize=12&orderBy=-set.releaseDate`;
-    const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),12000);
-    try{ const r=await fetch(url,{signal:ctl.signal}); if(!r.ok) throw new Error('http '+r.status); const j=await r.json(); return Array.isArray(j.data)?j.data:[]; }
-    finally{ clearTimeout(t); }
+  // ---- Bases de cartes (fichiers du site, disponibles hors connexion)
+  const DB={};
+  async function loadDB(name){ if(!DB[name]) DB[name]=fetch(`data/${name}.json`).then(r=>{ if(!r.ok) throw new Error('db'); return r.json(); }).catch(e=>{ delete DB[name]; throw e; }); return DB[name]; }
+  function normNum(game, ref){
+    ref=String(ref||'').trim().toUpperCase();
+    if(game==='onepiece'){ const m=ref.replace(/^0P/,'OP').match(/^((?:OP|ST|EB|PRB)\d{2}|P)\s*-\s*(\d{3})$/); return m ? `${m[1]}-${m[2]}` : null; }
+    const m=ref.match(/^(\d{1,3})\s*\/\s*(\d{2,3})$/); return m ? `${parseInt(m[1],10)}/${parseInt(m[2],10)}` : null;
+  }
+  async function cardLookup(game, ref){
+    const key=normNum(game, ref); if(!key) return [];
+    if(game==='pokemon'){
+      const db=await loadDB('pokemon'); const list=db[key]||[];
+      return list.map((c,i)=>({ key:key+'#'+i, name:c.f||c.e, alt:c.e, num:ref.replace(/\s/g,''), setName:c.s, setAbbr:c.a, rarity:c.r,
+        title:`${c.f||c.e} · ${ref.replace(/\s/g,'')}`, sub:[c.s+(c.a?` (${c.a})`:''), c.r].filter(Boolean).join(' · '),
+        img:c.i, img2: c.p ? `https://images.pokemontcg.io/${c.p.replace(/-([^-]+)$/,'/$1')}.png` : '',
+        link: c.p ? `https://prices.pokemontcg.io/cardmarket/${c.p}` : '', ptcg:c.p||'' }));
+    }
+    if(game==='onepiece'){
+      const db=await loadDB('onepiece'); const c=db[key]; if(!c) return [];
+      const name=c.fr||c.n;
+      return c.v.map(v=>{ const pm=v.id.match(/_([pr])(\d+)$/); const vl = pm ? (pm[1]==='p' ? `alt. ${pm[2]}` : `réimpr. ${pm[2]}`) : '';
+        return { key:v.id, name, alt:c.n, num:key, setName:v.s, rarity:c.r, variant:vl,
+          title:`${name} · ${key}${vl?` · ${vl}`:''}`, sub:[v.s, c.r, pm?(pm[1]==='p'?'illustration alternative':'réimpression'):''].filter(Boolean).join(' · '),
+          img:v.i, img2:'', link:'' }; });
+    }
+    return [];
+  }
+  async function pokePrices(cands){
+    const ids=cands.map(c=>c.ptcg).filter(Boolean).slice(0,10); if(!ids.length) return;
+    const q=ids.map(id=>`id:"${id}"`).join(' OR ');
+    const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),10000);
+    try{ const r=await fetch(`https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(q)}&select=id,cardmarket`,{signal:ctl.signal}); if(!r.ok) return;
+      const j=await r.json(); (j.data||[]).forEach(x=>{ const c=cands.find(k=>k.ptcg===x.id); const tp=x.cardmarket&&x.cardmarket.prices&&x.cardmarket.prices.trendPrice;
+        if(c && tp){ c.price=tp; c.priceDate=String(x.cardmarket.updatedAt||'').replace(/\//g,'-'); } }); }
+    catch(e){} finally{ clearTimeout(t); }
   }
   function cmSearch(game, q){
     return CM_SLUG[game] ? `https://www.cardmarket.com/fr/${CM_SLUG[game]}/Products/Search?searchString=${encodeURIComponent(q)}`
@@ -1463,7 +1492,7 @@ td.zero{color:var(--muted)}
       const parsed=parseCard(data && data.text, game);
       if(knownNumber){ if(/^[A-Z]/.test(knownNumber)) parsed.code=knownNumber; else parsed.number=knownNumber; parsed.ref=knownNumber; }
       let cands=[], lookupErr=false;
-      if(game==='pokemon' && parsed.number){ msg.textContent='Recherche de la carte…'; try{ cands=await pokeLookup(parsed.number); }catch(e){ lookupErr=true; } }
+      if((game==='pokemon'||game==='onepiece') && parsed.ref){ msg.textContent='Recherche de la carte…'; try{ cands=await cardLookup(game, parsed.ref); }catch(e){ lookupErr=true; } }
       if(my!==scanSeq) return;
       showScanResult(parsed, cands, lookupErr, img, game);
     }catch(e){
@@ -1478,61 +1507,73 @@ td.zero{color:var(--muted)}
   function showScanResult(p, cands, lookupErr, img, game){
     const out=$('scan-out'); out.replaceChildren();
     const top=document.createElement('div'); top.className='scan-top'; const info=document.createElement('div'); info.className='scan-st';
-    const title=document.createElement('strong'); title.textContent='Résultat de la lecture'; info.append(title);
+    const title=document.createElement('strong'); title.textContent='Résultat du scan'; info.append(title);
     if(!p.names.length && !p.ref){ const w=document.createElement('span'); w.className='scan-warn'; w.textContent='Aucun texte lisible. Reprends la photo de face, bien éclairée, carte entière.'; info.append(w); }
     top.append(img, info); out.append(top);
-    // Nom
-    const nameL=document.createElement('label'); nameL.textContent='Nom de la carte (touche une proposition ou corrige)';
-    const nameI=document.createElement('input'); nameI.id='scan-name'; nameI.maxLength=60; nameI.value=p.names[0]||''; nameL.append(nameI); out.append(nameL);
-    if(p.names.length>1){ const ch=document.createElement('div'); ch.className='scan-chips';
-      p.names.forEach(n=>{ const b=document.createElement('button'); b.type='button'; b.textContent=n; b.setAttribute('aria-pressed',String(n===nameI.value));
-        b.addEventListener('click',()=>{ nameI.value=n; ch.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); }); ch.append(b); });
-      out.append(ch); }
-    // Numéro
+    const hasDB = game==='pokemon' || game==='onepiece';
+    let chosen=null;
+    const link=document.createElement('a'); link.className='cm'; link.target='_blank'; link.rel='noopener noreferrer'; link.textContent='Voir sur Cardmarket ↗';
+    const fresh=c=>{ if(!c||!c.priceDate) return false; const t=Date.parse(c.priceDate); return isFinite(t) && Date.now()-t < 45*86400000; };
+    // Numéro (avec recherche dans la base)
     const numL=document.createElement('label'); numL.textContent = game==='onepiece' ? 'Code de la carte (ex. OP05-119)' : 'Numéro (ex. 199/165)';
     const numI=document.createElement('input'); numI.id='scan-num'; numI.maxLength=20; numI.value=p.ref||''; numL.append(numI); out.append(numL);
-    // Cartes Pokémon correspondantes
-    let chosen=null; const fresh=c=>{ const u=c&&c.cardmarket&&c.cardmarket.updatedAt; if(!u) return false; const t=Date.parse(u.replace(/\//g,'-')); return isFinite(t) && Date.now()-t < 45*86400000; };
-    if(game==='pokemon'){
-      if(cands.length){
-        const h=document.createElement('label'); h.textContent = cands.length>1 ? 'Quelle carte est-ce ? (même numéro dans plusieurs extensions)' : 'Carte trouvée'; out.append(h);
-        const list=document.createElement('div'); list.className='scan-cands';
-        cands.forEach((c,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='scan-cand'; b.setAttribute('aria-pressed','false');
-          const im=document.createElement('img'); im.alt=''; im.loading='lazy'; im.src=(c.images&&c.images.small)||'';
-          const sp=document.createElement('span'); const nm=document.createElement('b'); nm.textContent=`${c.name} · ${c.number}/${c.set&&c.set.printedTotal}`;
-          const st=document.createElement('small'); st.textContent=(c.set&&c.set.name)||'';
-          sp.append(nm,st);
-          const tp=c.cardmarket&&c.cardmarket.prices&&c.cardmarket.prices.trendPrice;
-          if(tp){ const pr=document.createElement('small'); pr.textContent=`Tendance Cardmarket : ${eur(tp)} · relevée le ${String(c.cardmarket.updatedAt||'').replace(/\//g,'-')}${fresh(c)?'':' (ancienne, à vérifier)'}`; sp.append(pr); }
-          b.append(im,sp);
-          b.addEventListener('click',()=>{ chosen=c; list.querySelectorAll('.scan-cand').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); });
-          list.append(b); if(i===0 && cands.length===1){ chosen=c; b.setAttribute('aria-pressed','true'); } });
-        out.append(list);
-      } else if(p.number){ const w=document.createElement('span'); w.className='scan-warn'; w.textContent= lookupErr ? 'La base de cartes Pokémon ne répond pas. Le nom et le numéro restent utilisables.' : 'Aucune carte trouvée avec ce numéro. Vérifie le numéro lu.'; out.append(w); }
+    // Cartes trouvées
+    const listBox=document.createElement('div'); listBox.className='scan-cands'; out.append(listBox);
+    // Nom (pré-rempli par la base si trouvée)
+    const nameL=document.createElement('label'); nameL.textContent='Nom de la carte';
+    const nameI=document.createElement('input'); nameI.id='scan-name'; nameI.maxLength=60; nameI.value=p.names[0]||''; nameL.append(nameI);
+    const chips=document.createElement('div'); chips.className='scan-chips';
+    if(p.names.length>1) p.names.forEach(n=>{ const b=document.createElement('button'); b.type='button'; b.textContent=n; b.setAttribute('aria-pressed','false');
+      b.addEventListener('click',()=>{ nameI.value=n; chips.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); }); chips.append(b); });
+    function pick(c, btn){
+      chosen=c; listBox.querySelectorAll('.scan-cand').forEach(x=>x.setAttribute('aria-pressed',String(x===btn)));
+      if(c) nameI.value=c.name; updLink();
     }
+    function renderCands(list, err){
+      listBox.replaceChildren(); chosen=null;
+      if(!hasDB) return;
+      if(!list.length){
+        if(numI.value.trim()){ const w=document.createElement('span'); w.className='scan-warn';
+          w.textContent = err ? 'La liste de cartes n’a pas pu se charger (connexion ?). Le nom et le numéro restent utilisables.' : 'Aucune carte avec ce numéro dans la liste. Vérifie le numéro lu, ou corrige-le ci-dessus.'; listBox.append(w); }
+        return;
+      }
+      const h=document.createElement('span'); h.className='hint';
+      h.textContent = list.length>1 ? (game==='onepiece' ? `${list.length} versions de cette carte : touche la tienne.` : `${list.length} cartes portent ce numéro : touche la tienne.`) : 'Carte reconnue ✓'; listBox.append(h);
+      list.forEach((c,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='scan-cand'; b.setAttribute('aria-pressed','false');
+        const im=document.createElement('img'); im.alt=''; im.loading='lazy'; im.referrerPolicy='no-referrer'; im.src=c.img||c.img2||'';
+        im.addEventListener('error',()=>{ if(c.img2 && im.src!==c.img2) im.src=c.img2; else im.style.visibility='hidden'; });
+        const sp=document.createElement('span'); const nm=document.createElement('b'); nm.textContent=c.title;
+        const st=document.createElement('small'); st.textContent=c.sub; sp.append(nm,st);
+        const pr=document.createElement('small'); pr.className='pr'; sp.append(pr); c._pr=pr;
+        b.append(im,sp); b.addEventListener('click',()=>pick(c,b)); listBox.append(b);
+        if(list.length===1 || (game==='onepiece' && i===0)) pick(c,b); });
+      if(game==='pokemon') pokePrices(list).then(()=>list.forEach(c=>{ if(c.price && c._pr) c._pr.textContent=`Tendance Cardmarket : ${eur(c.price)} · relevée le ${c.priceDate}${fresh(c)?'':' (ancienne, à vérifier)'}`; }));
+    }
+    renderCands(cands, lookupErr);
+    out.append(nameL); if(chips.childElementCount) out.append(chips);
+    let tmr=null;
+    numI.addEventListener('input',()=>{ clearTimeout(tmr); updLink(); if(!hasDB) return; tmr=setTimeout(async()=>{ let l=[], err=false; try{ l=await cardLookup(game, numI.value); }catch(e){ err=true; } renderCands(l, err); },350); });
     // Actions
     const acts=document.createElement('div'); acts.className='scan-acts';
     const use=document.createElement('button'); use.type='button'; use.className='btn primary'; use.textContent='Remplir le formulaire';
     use.addEventListener('click',()=>{
       const nm=nameI.value.trim() || (chosen&&chosen.name) || '';
       const num=numI.value.trim();
-      const setName= chosen&&chosen.set&&chosen.set.name;
-      const lib=[nm, num].filter(Boolean).join(' ') + (setName?` (${setName})`:'');
-      if(lib) $('g-lib').value=lib.slice(0,80);
-      const cm=chosen&&chosen.cardmarket&&chosen.cardmarket.url;
+      let lib;
+      if(game==='onepiece') lib = nm + (num?` (${normNum(game,num)||num})`:'') + (chosen&&chosen.variant?` (${chosen.variant})`:'');
+      else lib = nm + (num ? ` (${[chosen&&chosen.setAbbr, num].filter(Boolean).join(' ')})` : '') + (chosen&&chosen.setName&&!(chosen.setAbbr)?` ${chosen.setName}`:'');
+      if(lib.trim()) $('g-lib').value=lib.trim().slice(0,80);
+      const cm=chosen&&chosen.link;
       if(cm && cmOk(cm) && !$('g-lien').value) $('g-lien').value=cm;
-      const tp=chosen&&chosen.cardmarket&&chosen.cardmarket.prices&&chosen.cardmarket.prices.trendPrice;
-      S.scanCote = (tp && fresh(chosen)) ? cents(tp) : null;
+      S.scanCote = (chosen && chosen.price && fresh(chosen)) ? cents(chosen.price) : null;
       if(S.scanCote && S.sens==='obtenu' && !$('g-cote').value) $('g-cote').value=S.scanCote;
       scanClose(); $('g-lib').focus();
     });
-    const link=document.createElement('a'); link.className='cm'; link.target='_blank'; link.rel='noopener noreferrer'; link.textContent='Chercher sur Cardmarket ↗';
-    const updLink=()=>{ const cm=chosen&&chosen.cardmarket&&chosen.cardmarket.url; link.href = cm || cmSearch(game, [nameI.value.trim(), game==='onepiece'?numI.value.trim():''].filter(Boolean).join(' ') || numI.value.trim()); };
-    updLink(); [nameI,numI].forEach(i=>i.addEventListener('input',updLink)); out.addEventListener('click',()=>setTimeout(updLink,0));
-    const again=document.createElement('label'); again.className='btn'; again.htmlFor='scan-file-cam'; again.textContent='Reprendre une photo';
+    function updLink(){ const cm=chosen&&chosen.link; const q = game==='onepiece' ? (normNum(game,numI.value)||numI.value.trim()||nameI.value.trim()) : [nameI.value.trim(), (chosen&&chosen.setAbbr)||''].filter(Boolean).join(' ') || numI.value.trim(); link.href = cm || cmSearch(game, q); }
+    updLink(); nameI.addEventListener('input',updLink);
+    const again=document.createElement('button'); again.type='button'; again.className='btn'; again.textContent='Rescanner'; again.addEventListener('click',()=>{ scanClose(); camOpen(); });
     const close=document.createElement('button'); close.type='button'; close.className='btn'; close.textContent='Fermer'; close.addEventListener('click',scanClose);
     acts.append(use, link, again, close); out.append(acts);
-    if(game==='pokemon' && cands.length && !chosen){ const n=document.createElement('span'); n.className='hint'; n.textContent='Choisis la bonne carte dans la liste pour remplir aussi l’extension et le lien Cardmarket.'; out.append(n); }
   }
 
   // ---- Scanner en direct : cadre de carte + lecture continue de la zone du numéro

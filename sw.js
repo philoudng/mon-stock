@@ -1,5 +1,5 @@
 // Mon Stock — fonctionnement hors connexion. Changer VERSION à chaque mise à jour.
-const VERSION = 'v38';
+const VERSION = 'v39';
 const CACHE = 'monstock-' + VERSION;
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
@@ -29,6 +29,9 @@ self.addEventListener('fetch', e => {
   }
   // Fichiers du site : copie locale d'abord
   if (url.origin === location.origin) {
-    e.respondWith(caches.match(req).then(hit => hit || fetch(req)));
+    e.respondWith(caches.match(req).then(hit => hit || fetch(req).then(r => {
+      if (r.ok && url.pathname.includes('/data/')) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
+      return r;
+    })));
   }
 });
