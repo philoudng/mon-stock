@@ -59,7 +59,10 @@ def main():
     # One Piece
     try:
         pr = prices(18)
-        for p in products(18):
+        plist = products(18)
+        sample = [x for x in plist if 'OP05-119' in ' '.join(str(v) for v in x.values())][:30]
+        json.dump({'fields': sorted(plist[0].keys()) if plist else [], 'OP05-119': sample}, open(os.path.join(ROOT, 'data', 'cardmarket-sample.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+        for p in plist:
             text = ' '.join(str(v) for v in p.values() if isinstance(v, (str, int)))
             m = CODE.search(text)
             if not m:
@@ -68,7 +71,7 @@ def main():
             vm = VER.search(str(p.get('name', '')))
             pid = int(p['idProduct'])
             t, tf = pr.get(pid, (None, None))
-            result['op'].setdefault(code, []).append([pid, int(vm.group(1)) if vm else 1, t, tf])
+            result['op'].setdefault(code, []).append([pid, int(vm.group(1)) if vm else 1, t, tf, str(p.get('name', '')), p.get('idExpansion')])
         for v in result['op'].values():
             v.sort(key=lambda x: (x[1], x[0]))
     except Exception as e:  # on garde le fichier précédent pour la partie qui échoue
