@@ -542,8 +542,9 @@ td.zero{color:var(--muted)}
       <p class="hint" id="bk-msg" hidden></p>
     </section>
     <details id="footer-details">
-      <summary>Version 42 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 43 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v43</span><span>Scanner One Piece : zone du numéro un peu rallongée côté gauche.</span></li>
         <li><span class="v">v42</span><span>Scanner One Piece : zone du numéro raccourcie côté gauche.</span></li>
         <li><span class="v">v41</span><span>Scanner : cadre de la carte plus grand et zone du numéro (rose) réduite à la taille réelle du numéro imprimé.</span></li>
         <li><span class="v">v40</span><span>Illustrations : grande image de la carte reconnue après le scan (touchable pour l&#x27;agrandir), vignette dans le registre, et registre plus lisible sur téléphone.</span></li>
@@ -1643,7 +1644,7 @@ td.zero{color:var(--muted)}
   // ---- Scanner en direct : cadre de carte + lecture continue de la zone du numéro
   const CAM_ZONES={
     // Position réelle du numéro imprimé, en proportion de la carte (63 × 88 mm)
-    onepiece:{x:.68,y:.925,w:.28,h:.055,side:'right',ex:'OP01-001'},
+    onepiece:{x:.64,y:.925,w:.32,h:.055,side:'right',ex:'OP01-001'},
     pokemon:{x:.04,y:.925,w:.38,h:.055,side:'left',ex:'199/165'},
     lorcana:{x:.04,y:.925,w:.4,h:.055,side:'left',ex:'123/204'},
     other:{x:.05,y:.9,w:.9,h:.08,side:'center',ex:''}
