@@ -1,0 +1,56 @@
+{
+ "fields": [
+  "avg",
+  "avg-foil",
+  "avg1",
+  "avg1-foil",
+  "avg30",
+  "avg30-foil",
+  "avg7",
+  "avg7-foil",
+  "idCategory",
+  "idProduct",
+  "low",
+  "low-foil",
+  "trend",
+  "trend-foil"
+ ],
+ "top": {
+  "version": 1,
+  "createdAt": "2026-10-09T02:45:47+0200"
+ },
+ "sample": [
+  {
+   "idProduct": 747876,
+   "idCategory": 1621,
+   "avg": 7.3,
+   "low": 8,
+   "trend": 10.23,
+   "avg1": 14.51,
+   "avg7": 9.83,
+   "avg30": 9.29,
+   "avg-foil": null,
+   "low-foil": null,
+   "trend-foil": 0,
+   "avg1-foil": null,
+   "avg7-foil": null,
+   "avg30-foil": null
+  },
+  {
+   "idProduct": 747877,
+   "idCategory": 1621,
+   "avg": 199.64,
+   "low": 129.95,
+   "trend": 159.01,
+   "avg1": 225,
+   "avg7": 176.75,
+   "avg30": 231.28,
+   "avg-foil": null,
+   "low-foil": null,
+   "trend-foil": 0,
+   "avg1-foil": null,
+   "avg7-foil": null,
+   "avg30-foil": null
+  }
+ ]
+}
