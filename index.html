@@ -542,8 +542,9 @@ td.zero{color:var(--muted)}
       <p class="hint" id="bk-msg" hidden></p>
     </section>
     <details id="footer-details">
-      <summary>Version 44 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 45 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v45</span><span>One Piece : la bonne version Cardmarket (V.1, V.2…) et la bonne extension sont choisies selon la version scannée.</span></li>
         <li><span class="v">v44</span><span>Scan : lien Cardmarket direct de la carte rempli automatiquement, avec la tendance du jour (Pokémon et One Piece, mise à jour quotidienne).</span></li>
         <li><span class="v">v43</span><span>Scanner One Piece : zone du numéro un peu rallongée côté gauche.</span></li>
         <li><span class="v">v42</span><span>Scanner One Piece : zone du numéro raccourcie côté gauche.</span></li>
@@ -1519,7 +1520,7 @@ td.zero{color:var(--muted)}
       return null; })();
     return CMP;
   }
-  function setCmChoice(c, prod, date){ c.cmId=prod[0]; c.cmVer=prod[1]; c.link=cmProduct('OnePiece', prod[0]); const t=prod[2]||prod[3]; c.price=t||null; c.priceDate=t?date:null; }
+  function setCmChoice(c, prod, date){ c.cmId=prod[0]; c.cmVer=prod[1]; c.cmExp=prod[4]||''; c.cmForeign=!!prod[5]; c.link=cmProduct('OnePiece', prod[0]); const t=prod[2]||prod[3]; c.price=t||null; c.priceDate=t?date:null; }
   async function cmEnrich(game, cands){
     const cm=await loadCM();
     if(game==='pokemon'){
@@ -1530,8 +1531,17 @@ td.zero{color:var(--muted)}
       return;
     }
     if(game==='onepiece' && cm && cm.op){
-      cands.forEach(c=>{ const list=cm.op[c.num]; if(!list||!list.length) return; c.cmList=list; c.cmDate=cm.updated;
-        const want=(c.vIndex||0)+1; setCmChoice(c, list.find(x=>x[1]===want) || list[0], cm.updated); });
+      const norm=t=>fold(t).replace(/[^a-z0-9]+/g,' ').trim();
+      cands.forEach(c=>{ const all=cm.op[c.num]; if(!all||!all.length) return;
+        const en=all.filter(r=>!r[5]); c.cmList = en.length ? en : all; c.cmDate=cm.updated;
+        // extension Cardmarket correspondant à l'extension de la version scannée
+        const setN=norm(c.setName||'');
+        const sameExp=c.cmList.filter(r=>r[4] && setN.includes(norm(r[4])));
+        // rang de cette version parmi celles de la même extension (normale = V.1, puis alternatives)
+        const siblings=cands.filter(x=>x.setName===c.setName);
+        const want=Math.max(1, siblings.indexOf(c)+1);
+        const pickFrom=sameExp.length ? sameExp : c.cmList;
+        setCmChoice(c, pickFrom.find(r=>r[1]===want) || pickFrom[0], cm.updated); });
     }
   }
   async function pokePrices(cands){
@@ -1605,9 +1615,9 @@ td.zero{color:var(--muted)}
         const lab=document.createElement('small'); lab.textContent='Version sur Cardmarket (vérifie que c’est la bonne) :';
         const ch=document.createElement('div'); ch.className='scan-chips'; ch.style.justifyContent='center';
         c.cmList.forEach(prod=>{ const b=document.createElement('button'); b.type='button'; const t=prod[2]||prod[3];
-          b.textContent=`V.${prod[1]}${t?` · ${eur(t)}`:''}`; b.setAttribute('aria-pressed',String(prod[0]===c.cmId));
+          b.textContent=`V.${prod[1]}${prod[4]?` · ${prod[4]}`:''}${prod[5]?' (hors anglais)':''}${t?` · ${eur(t)}`:''}`; b.setAttribute('aria-pressed',String(prod[0]===c.cmId));
           b.addEventListener('click',()=>{ setCmChoice(c, prod, c.cmDate); ch.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); updLink();
-            if(c._pr) c._pr.textContent = c.price ? `Cardmarket V.${c.cmVer} : ${eur(c.price)} · tendance du ${c.priceDate}` : 'Lien Cardmarket trouvé'; });
+            if(c._pr) c._pr.textContent = c.price ? `Cardmarket V.${c.cmVer}${c.cmExp?` (${c.cmExp})`:''} : ${eur(c.price)} · tendance du ${c.priceDate}` : 'Lien Cardmarket trouvé'; });
           ch.append(b); });
         hero.append(lab, ch);
       } else if(c.link && c.link.includes('cardmarket.com')){ const ok=document.createElement('small'); ok.textContent = `Lien Cardmarket trouvé${c.price?` · tendance ${eur(c.price)}`:''}`; hero.append(ok); }
@@ -1648,7 +1658,7 @@ td.zero{color:var(--muted)}
         const pr=document.createElement('small'); pr.className='pr'; sp.append(pr); c._pr=pr;
         b.append(im,sp); b.addEventListener('click',()=>pick(c,b)); listBox.append(b);
         if(list.length===1 || (game==='onepiece' && i===0)) pick(c,b); });
-      cmEnrich(game, list).then(()=>{ list.forEach(c=>{ if(c._pr) c._pr.textContent = c.price ? `Cardmarket${c.cmVer?` V.${c.cmVer}`:''} : ${eur(c.price)} · tendance du ${c.priceDate}${fresh(c)?'':' (ancienne, à vérifier)'}` : (c.link&&c.link.includes('cardmarket.com')?'Lien Cardmarket trouvé':''); }); if(chosen){ updLink(); showHero(chosen); } }).catch(()=>{});
+      cmEnrich(game, list).then(()=>{ list.forEach(c=>{ if(c._pr) c._pr.textContent = c.price ? `Cardmarket${c.cmVer?` V.${c.cmVer}`:''}${c.cmExp?` (${c.cmExp})`:''} : ${eur(c.price)} · tendance du ${c.priceDate}${fresh(c)?'':' (ancienne, à vérifier)'}` : (c.link&&c.link.includes('cardmarket.com')?'Lien Cardmarket trouvé':''); }); if(chosen){ updLink(); showHero(chosen); } }).catch(()=>{});
     }
     renderCands(cands, lookupErr);
     out.append(nameL); if(chips.childElementCount) out.append(chips);
