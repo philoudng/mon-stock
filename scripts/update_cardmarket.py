@@ -1,7 +1,7 @@
 """Récupère chaque jour les fichiers publics de Cardmarket (catalogue + price guide)
 et produit data/cardmarket.json, utilisé par le scan du site :
   - "op" : pour chaque code One Piece (ex. OP05-119), la liste des produits Cardmarket
-           [idProduct, version, tendance, tendance foil]
+           [idProduct, version (V.n dans son extension), tendance, tendance foil, extension, hors anglais (0/1)]
   - "pk" : pour chaque idProduct Pokémon présent dans data/pokemon.json, [tendance, tendance foil]
 Jeux Cardmarket : 6 = Pokémon, 18 = One Piece.
 """
@@ -60,28 +60,37 @@ def main():
     try:
         pr = prices(18)
         plist = products(18)
-        sample = [x for x in plist if 'OP05-119' in ' '.join(str(v) for v in x.values())][:30]
+        # Noms des extensions, déduits des produits scellés (boosters, displays…)
+        exp_names, exp_foreign = {}, {}
         try:
             ns = as_list(get(f'{BASE}/productList/products_nonsingles_18.json'), 'products', 'product')
         except Exception as e:
-            ns = [{'error': str(e)}]
-        exp_ids = sorted({x.get('idExpansion') for x in sample})
-        json.dump({'fields': sorted(plist[0].keys()) if plist else [], 'OP05-119': sample[:3],
-                   'nonsingles_count': len(ns), 'nonsingles_for_exp': {str(e): [x.get('name') for x in ns if x.get('idExpansion') == e][:6] for e in exp_ids},
-                   'nonsingles_first': ns[:5]},
-                  open(os.path.join(ROOT, 'data', 'cardmarket-sample.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+            print('produits scellés indisponibles', e, file=sys.stderr); ns = []
+        cands = {}
+        for x in ns:
+            e, n = x.get('idExpansion'), str(x.get('name', ''))
+            if e is None or not n: continue
+            if re.search(r'Non-English|Asia Region|Japanese|Chinese', n, re.I): exp_foreign[e] = 1
+            base = re.sub(r'\s*\((?:Non-English|Asia Region Legal|Japanese|[^)]*Booster Box[^)]*)\)', '', n)
+            base = re.sub(r'\s*(Booster Box Case.*|Booster Box|Sleeved Booster|Booster|Dash Pack|Premium Booster)$', '', base).strip(' -')
+            if re.match(r'^(Common|Uncommon|Rare) Set - ', base): base = re.sub(r'^(Common|Uncommon|Rare) Set - ', '', base); base = re.sub(r'\s*\([A-Z]{2,3}\d{2}\)$', '', base)
+            cands.setdefault(e, {}); cands[e][base] = cands[e].get(base, 0) + 1
+        for e, c in cands.items():
+            exp_names[e] = max(c.items(), key=lambda kv: (kv[1], -len(kv[0])))[0]
+        groups = {}
         for p in plist:
-            text = ' '.join(str(v) for v in p.values() if isinstance(v, (str, int)))
-            m = CODE.search(text)
-            if not m:
-                continue
+            m = CODE.search(str(p.get('name', '')))
+            if not m: continue
             code = f'{m.group(1)}-{m.group(2)}'
-            vm = VER.search(str(p.get('name', '')))
-            pid = int(p['idProduct'])
-            t, tf = pr.get(pid, (None, None))
-            result['op'].setdefault(code, []).append([pid, int(vm.group(1)) if vm else 1, t, tf, str(p.get('name', '')), p.get('idExpansion')])
-        for v in result['op'].values():
-            v.sort(key=lambda x: (x[1], x[0]))
+            groups.setdefault(code, {}).setdefault(p.get('idExpansion'), []).append(int(p['idProduct']))
+        for code, exps in groups.items():
+            rows = []
+            for e, ids in exps.items():
+                for v, pid in enumerate(sorted(ids), 1):
+                    t, tf = pr.get(pid, (None, None))
+                    rows.append([pid, v, t, tf, exp_names.get(e, ''), exp_foreign.get(e, 0)])
+            rows.sort(key=lambda r: (r[5], r[0]))
+            result['op'][code] = rows
     except Exception as e:  # on garde le fichier précédent pour la partie qui échoue
         print('One Piece : échec', e, file=sys.stderr)
     # Pokémon : uniquement les produits présents dans notre liste

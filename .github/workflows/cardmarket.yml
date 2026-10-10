@@ -25,5 +25,5 @@ jobs:
         run: |
           git config user.name "mon-stock-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/cardmarket.json data/cardmarket-sample.json
+          git add -A data/
           git diff --cached --quiet || (git commit -m "Prix Cardmarket du $(date +%F)" && git push)
