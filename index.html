@@ -481,6 +481,10 @@ td.zero{color:var(--muted)}
       </div>
       <label>Lien Cardmarket<input id="g-lien" type="url" maxlength="400" placeholder="https://www.cardmarket.com/fr/…"></label>
       <div class="row2">
+        <label>Langue (Cardmarket)<select id="g-lang"><option value="2">Français</option><option value="1">Anglais</option><option value="7">Japonais</option><option value="3">Allemand</option><option value="5">Italien</option><option value="4">Espagnol</option><option value="8">Portugais</option><option value="10">Coréen</option><option value="6">Chinois simplifié</option><option value="11">Chinois traditionnel</option><option value="9">Russe</option></select></label>
+        <label>État minimum<select id="g-cond"><option value="1">Mint</option><option value="2" selected>Near Mint</option><option value="3">Excellent</option><option value="4">Good</option><option value="5">Light Played</option><option value="6">Played</option><option value="7">Poor</option></select></label>
+      </div>
+      <div class="row2">
         <label id="g-montant-wrap"><span id="g-montant-lbl">Prix payé (€)</span><input id="g-montant" type="text" inputmode="decimal" autocomplete="off" required placeholder="Ex. 25 ou 20+40+30"></label>
         <label id="g-cout-wrap" hidden>Prix d'achat unitaire (€)<input id="g-cout" type="number" step="0.01" min="0" placeholder="facultatif"></label>
         <label id="g-qte-wrap">Quantité<input id="g-qte" type="number" min="1" step="1" value="1" required></label>
@@ -547,8 +551,9 @@ td.zero{color:var(--muted)}
       <p class="hint" id="bk-msg" hidden></p>
     </section>
     <details id="footer-details">
-      <summary>Version 46 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 47 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v47</span><span>Lien Cardmarket filtré automatiquement (langue + état minimum Near Mint, modifiables) et « premier prix affiché » ajouté à la cote. Au scan : prix le plus bas Cardmarket en plus de la tendance.</span></li>
         <li><span class="v">v46</span><span>Scan : lien Cardmarket et article remplis directement dès que la carte est trouvée. Nouveau champ Catégorie (Carte, Display, Booster…) à côté de l&#x27;Article, qui reste libre.</span></li>
         <li><span class="v">v45</span><span>One Piece : la bonne version Cardmarket (V.1, V.2…) et la bonne extension sont choisies selon la version scannée.</span></li>
         <li><span class="v">v44</span><span>Scan : lien Cardmarket direct de la carte rempli automatiquement, avec la tendance du jour (Pokémon et One Piece, mise à jour quotidienne).</span></li>
@@ -1064,7 +1069,7 @@ td.zero{color:var(--muted)}
         const cs=t.cotes; if(cs.length>1) c.append(spark(cs));
         const prev=cs.length>1?cs[cs.length-2].prix:null;
         const arrow = prev===null ? '' : lc.prix>prev ? '▲ ' : lc.prix<prev ? '▼ ' : '= ';
-        c.append(document.createTextNode(`${arrow}${sgn(d)}${pct} · relevé le ${fdate(lc.date)}`));
+        c.append(document.createTextNode(`${arrow}${sgn(d)}${pct} · relevé le ${fdate(lc.date)}${lc.min?` · à partir de ${eur(lc.min)}${lc.minAll?' (toutes langues)':lc.minLbl?` (${lc.minLbl})`:''}`:''}`));
         meta.push(c);
       }
       const openSell = ()=>{ S.sellFor = S.sellFor===t._id ? null : t._id; S.coteFor=null; render(); setTimeout(()=>{ const i=$('sell-prix'); if(i) i.focus(); },0); };
@@ -1249,6 +1254,18 @@ td.zero{color:var(--muted)}
     box.append(prev, ok, no, msg);
     return box;
   }
+  // ---- Filtres Cardmarket : langue + état minimum ajoutés au lien (Near Mint par défaut)
+  const CM_LANG={1:'EN',2:'FR',3:'DE',4:'ES',5:'IT',6:'ZH',7:'JP',8:'PT',9:'RU',10:'KO',11:'ZH-TW'};
+  const CM_COND={1:'MT',2:'NM',3:'EX',4:'GD',5:'LP',6:'PL',7:'PO'};
+  function defaultLang(){ try{ return localStorage.getItem('stock-cm-lang')||'2'; }catch(e){ return '2'; } }
+  function cmFilters(url, lang, cond){
+    try{ const u=new URL(url); if(!(u.hostname==='cardmarket.com'||u.hostname.endsWith('.cardmarket.com'))) return url;
+      if(lang) u.searchParams.set('language', lang); if(cond) u.searchParams.set('minCondition', cond); return u.toString(); }catch(e){ return url; }
+  }
+  function cmParams(url){ try{ const u=new URL(url); return {lang:u.searchParams.get('language'), cond:u.searchParams.get('minCondition')}; }catch(e){ return {}; } }
+  function filterLabel(url){ const p=cmParams(url||''); return [CM_LANG[p.lang], CM_COND[p.cond]].filter(Boolean).join(' '); }
+  function applyLinkFilters(){ const i=$('g-lien'); if(i.value && cmOk(i.value)) i.value=cmFilters(i.value.trim(), $('g-lang').value, $('g-cond').value); }
+
   function coteEditor(t){
     const box=document.createElement('div'); box.className='cote-edit';
     const p=document.createElement('p');
@@ -1257,17 +1274,23 @@ td.zero{color:var(--muted)}
     const lab=document.createElement('label'); lab.textContent='Tendance (€)';
     const inp=document.createElement('input'); inp.type='number'; inp.step='0.01'; inp.min='0'; inp.id='cote-input'; const lc=lastCote(t); if(lc) inp.placeholder=String(lc.prix);
     lab.append(inp);
+    const fl=filterLabel(t.lien);
+    const lab2=document.createElement('label'); lab2.textContent=`Premier prix affiché${fl?` (${fl})`:''} (€)`;
+    const inp2=document.createElement('input'); inp2.type='number'; inp2.step='0.01'; inp2.min='0'; inp2.id='cote-min'; inp2.placeholder='le moins cher, facultatif'; if(lc&&lc.min&&!lc.minAll) inp2.placeholder=String(lc.min);
+    lab2.append(inp2);
     const ok=document.createElement('button'); ok.type='button'; ok.className='btn primary'; ok.textContent='Enregistrer';
     const no=document.createElement('button'); no.type='button'; no.className='btn'; no.textContent='Annuler';
     const go=async()=>{ if(inp.value==='') { inp.focus(); return; }
       const cs=(Array.isArray(t.cotes)?t.cotes.slice():[]); const today=todayISO(); const entry={date:today, prix:num(inp.value)};
+      if(inp2.value!==''){ entry.min=cents(num(inp2.value)); if(fl) entry.minLbl=fl; }
       if(cs.length && cs[cs.length-1].date===today) cs[cs.length-1]=entry; else cs.push(entry);
       const d=strip(t); d.cotes=cs.slice(-60);
       if(await save(t._id,d)) S.coteFor=null; render(); };
     ok.addEventListener('click',go);
     inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); go(); } if(e.key==='Escape'){ S.coteFor=null; render(); } });
     no.addEventListener('click',()=>{ S.coteFor=null; render(); });
-    box.append(p,lab,ok,no); return box;
+    inp2.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); go(); } });
+    box.append(p,lab,lab2,ok,no); return box;
   }
 
   function item({e,name,onName,thumb,meta,cap,amt,sub,subCls,amtCls,stopped,edit,extra=[],row=null}){
@@ -1361,9 +1384,12 @@ td.zero{color:var(--muted)}
   $('tcg-search').addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.target.value=''; S.tcgQuery=''; render(); } });
   $('tcg-search-clear').addEventListener('click',()=>{ $('tcg-search').value=''; S.tcgQuery=''; render(); $('tcg-search').focus(); });
   $('g-cat').addEventListener('change',()=>{ delete $('g-cat').dataset.auto; });
+  $('g-lang').addEventListener('change',()=>{ try{ localStorage.setItem('stock-cm-lang',$('g-lang').value); }catch(e){} applyLinkFilters(); });
+  $('g-cond').addEventListener('change',applyLinkFilters);
+  $('g-lien').addEventListener('change',applyLinkFilters);
   $('s-achat').addEventListener('click',()=>setSens('achat')); $('s-obtenu').addEventListener('click',()=>setSens('obtenu')); $('s-vente').addEventListener('click',()=>setSens('vente'));
-  function resetTcg(){ fG.reset(); S.editing.tcg=null; S.scanCote=null; S.scanImg=null; $('g-date').value=todayISO(); setSens(S.sens); setEditing('tcg',fG,$('f-tcg-title'),`Nouveau mouvement ${gameName(S.game)}`,null); showMsg(fG); }
-  function editTcg(t){ S.editing.tcg=t._id; setSens(t.obtenu?'obtenu':t.sens); $('g-cat').value=t.categorie||''; delete $('g-cat').dataset.auto; $('g-cote').value = lastCote(t) ? lastCote(t).prix : ''; fillMoyens($('g-moyen'),t.sens,t.moyen||''); fillComptes($('g-compte'),t.compteId||''); $('g-lib').value=t.libelle||''; $('g-montant').value= Array.isArray(t.prix)&&t.prix.length>1 ? t.prix.map(fmtNum).join('+') : fmtNum(cents(puOf(t))); $('g-qte').value=qteOf(t); syncG(); $('g-cout').value=typeof t.cpu==='number'?t.cpu:(typeof t.cout==='number'?cents(t.cout/qteOf(t)):''); $('g-plat').value=t.plateforme||''; $('g-date').value=t.date||todayISO(); $('g-cdate').value=t.cdate||''; $('g-lien').value=t.lien||'';
+  function resetTcg(){ fG.reset(); $('g-lang').value=defaultLang(); $('g-cond').value='2'; S.editing.tcg=null; S.scanCote=null; S.scanMin=null; S.scanImg=null; $('g-date').value=todayISO(); setSens(S.sens); setEditing('tcg',fG,$('f-tcg-title'),`Nouveau mouvement ${gameName(S.game)}`,null); showMsg(fG); }
+  function editTcg(t){ S.editing.tcg=t._id; { const cp=cmParams(t.lien||''); $('g-lang').value=cp.lang||defaultLang(); $('g-cond').value=cp.cond||'2'; } setSens(t.obtenu?'obtenu':t.sens); $('g-cat').value=t.categorie||''; delete $('g-cat').dataset.auto; $('g-cote').value = lastCote(t) ? lastCote(t).prix : ''; fillMoyens($('g-moyen'),t.sens,t.moyen||''); fillComptes($('g-compte'),t.compteId||''); $('g-lib').value=t.libelle||''; $('g-montant').value= Array.isArray(t.prix)&&t.prix.length>1 ? t.prix.map(fmtNum).join('+') : fmtNum(cents(puOf(t))); $('g-qte').value=qteOf(t); syncG(); $('g-cout').value=typeof t.cpu==='number'?t.cpu:(typeof t.cout==='number'?cents(t.cout/qteOf(t)):''); $('g-plat').value=t.plateforme||''; $('g-date').value=t.date||todayISO(); $('g-cdate').value=t.cdate||''; $('g-lien').value=t.lien||'';
     setEditing('tcg',fG,$('f-tcg-title'),'',t._id); $('g-lib').focus(); }
   fG.querySelector('[data-cancel]').addEventListener('click',resetTcg);
   fG.addEventListener('submit',async ev=>{ ev.preventDefault();
@@ -1372,9 +1398,9 @@ td.zero{color:var(--muted)}
       const q=Math.max(1,Math.round(num($('g-qte').value)||1));
       const d={kind:'tcg',jeu:prev?norm(prev).jeu:S.game,sens:'achat',obtenu:true,libelle:$('g-lib').value.trim(),categorie:$('g-cat').value||undefined,pu:0,qte:q,montant:0,plateforme:$('g-plat').value.trim(),date:$('g-date').value,createdAt:prev?.createdAt||Date.now()};
       const lien=$('g-lien').value.trim();
-      if(lien){ if(!cmOk(lien)){ showMsg(fG,'Le lien doit être une adresse https://…cardmarket.com/… copiée depuis la fiche de la carte.'); return; } d.lien=lien; }
+      if(lien){ if(!cmOk(lien)){ showMsg(fG,'Le lien doit être une adresse https://…cardmarket.com/… copiée depuis la fiche de la carte.'); return; } d.lien=cmFilters(lien, $('g-lang').value, $('g-cond').value); }
       const cs = prev && Array.isArray(prev.cotes) ? prev.cotes.slice() : [];
-      if($('g-cote').value!==''){ const e={date:todayISO(), prix:cents(num($('g-cote').value))}; const last=cs[cs.length-1];
+      if($('g-cote').value!==''){ const e={date:todayISO(), prix:cents(num($('g-cote').value)), ...(S.scanMin && S.scanCote===cents(num($('g-cote').value)) ? {min:S.scanMin, minAll:true} : {})}; const last=cs[cs.length-1];
         if(!last || last.prix!==e.prix){ if(last && last.date===e.date) cs[cs.length-1]=e; else cs.push(e); } }
       if(cs.length) d.cotes=cs.slice(-60);
       if(S.scanImg && S.scanImg.length) d.img=S.scanImg; else if(prev && prev.img) d.img=prev.img;
@@ -1389,9 +1415,9 @@ td.zero{color:var(--muted)}
     else { q=Math.max(1,Math.round(num($('g-qte').value)||1)); d.pu=terms[0]; d.qte=q; d.montant=cents(d.pu*q); }
     if(S.sens==='vente' && $('g-cout').value!==''){ d.cpu=num($('g-cout').value); d.cout=cents(d.cpu*q); if($('g-cdate').value) d.cdate=$('g-cdate').value; }
     const lien=$('g-lien').value.trim();
-    if(lien){ if(!cmOk(lien)){ showMsg(fG,'Le lien doit être une adresse https://…cardmarket.com/… copiée depuis la fiche de la carte.'); return; } d.lien=lien; }
+    if(lien){ if(!cmOk(lien)){ showMsg(fG,'Le lien doit être une adresse https://…cardmarket.com/… copiée depuis la fiche de la carte.'); return; } d.lien=cmFilters(lien, $('g-lang').value, $('g-cond').value); }
     if(prev && Array.isArray(prev.cotes)) d.cotes=prev.cotes;
-    if(!d.cotes && S.scanCote && S.sens==='achat') d.cotes=[{date:todayISO(), prix:S.scanCote}];
+    if(!d.cotes && S.scanCote && S.sens==='achat') d.cotes=[{date:todayISO(), prix:S.scanCote, ...(S.scanMin?{min:S.scanMin, minAll:true}:{})}];
     if(S.scanImg && S.scanImg.length) d.img=S.scanImg; else if(prev && prev.img) d.img=prev.img;
     if(prev && prev.achatId) d.achatId=prev.achatId;
     payFields(d,$('g-moyen'),$('g-compte'));
@@ -1528,13 +1554,13 @@ td.zero{color:var(--muted)}
       return null; })();
     return CMP;
   }
-  function setCmChoice(c, prod, date){ c.cmId=prod[0]; c.cmVer=prod[1]; c.cmExp=prod[4]||''; c.cmForeign=!!prod[5]; c.link=cmProduct('OnePiece', prod[0]); const t=prod[2]||prod[3]; c.price=t||null; c.priceDate=t?date:null; }
+  function setCmChoice(c, prod, date){ c.low=prod[6]||null; c.cmId=prod[0]; c.cmVer=prod[1]; c.cmExp=prod[4]||''; c.cmForeign=!!prod[5]; c.link=cmProduct('OnePiece', prod[0]); const t=prod[2]||prod[3]; c.price=t||null; c.priceDate=t?date:null; }
   async function cmEnrich(game, cands){
     const cm=await loadCM();
     if(game==='pokemon'){
       let missing=false;
       cands.forEach(c=>{ const v=cm&&cm.pk&&c.cmId!=null ? cm.pk[String(c.cmId)] : null; const t=v&&(v[0]||v[1]);
-        if(t){ c.price=t; c.priceDate=cm.updated; } else missing=true; });
+        if(t){ c.price=t; c.priceDate=cm.updated; c.low=v[2]||null; } else missing=true; });
       if(missing) await pokePrices(cands.filter(c=>!c.price));
       return;
     }
@@ -1666,7 +1692,7 @@ td.zero{color:var(--muted)}
         const pr=document.createElement('small'); pr.className='pr'; sp.append(pr); c._pr=pr;
         b.append(im,sp); b.addEventListener('click',()=>pick(c,b)); listBox.append(b);
         if(list.length===1 || (game==='onepiece' && i===0)) pick(c,b); });
-      cmEnrich(game, list).then(()=>{ if(chosen) applyScan(); list.forEach(c=>{ if(c._pr) c._pr.textContent = c.price ? `Cardmarket${c.cmVer?` V.${c.cmVer}`:''}${c.cmExp?` (${c.cmExp})`:''} : ${eur(c.price)} · tendance du ${c.priceDate}${fresh(c)?'':' (ancienne, à vérifier)'}` : (c.link&&c.link.includes('cardmarket.com')?'Lien Cardmarket trouvé':''); }); if(chosen){ updLink(); showHero(chosen); } }).catch(()=>{});
+      cmEnrich(game, list).then(()=>{ if(chosen) applyScan(); list.forEach(c=>{ if(c._pr) c._pr.textContent = c.price ? `Cardmarket${c.cmVer?` V.${c.cmVer}`:''}${c.cmExp?` (${c.cmExp})`:''} : ${eur(c.price)}${c.low?` · le moins cher ${eur(c.low)}`:''} · du ${c.priceDate}${fresh(c)?'':' (ancienne, à vérifier)'}` : (c.link&&c.link.includes('cardmarket.com')?'Lien Cardmarket trouvé':''); }); if(chosen){ updLink(); showHero(chosen); } }).catch(()=>{});
     }
     renderCands(cands, lookupErr);
     out.append(nameL); if(chips.childElementCount) out.append(chips);
@@ -1683,9 +1709,10 @@ td.zero{color:var(--muted)}
       else lib = nm + (num ? ` (${[chosen&&chosen.setAbbr, num].filter(Boolean).join(' ')})` : '') + (chosen&&chosen.setName&&!(chosen.setAbbr)?` ${chosen.setName}`:'');
       if(lib.trim()) $('g-lib').value=lib.trim().slice(0,80);
       const cm=chosen&&chosen.link;
-      if(cm && cmOk(cm)) $('g-lien').value=cm;
+      if(cm && cmOk(cm)) $('g-lien').value=cmFilters(cm, $('g-lang').value, $('g-cond').value);
       if(!$('g-cat').value || $('g-cat').dataset.auto) { $('g-cat').value='Carte'; $('g-cat').dataset.auto='1'; }
       S.scanCote = (chosen && chosen.price && fresh(chosen)) ? cents(chosen.price) : null;
+      S.scanMin = (S.scanCote && chosen.low) ? cents(chosen.low) : null;
       S.scanImg = chosen ? (chosen.thumbs||chosen.imgs||[]).slice(0,2) : null;
       if(S.scanCote && S.sens==='obtenu' && !$('g-cote').value) $('g-cote').value=S.scanCote;
     }

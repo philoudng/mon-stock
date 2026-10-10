@@ -1,8 +1,8 @@
 """Récupère chaque jour les fichiers publics de Cardmarket (catalogue + price guide)
 et produit data/cardmarket.json, utilisé par le scan du site :
   - "op" : pour chaque code One Piece (ex. OP05-119), la liste des produits Cardmarket
-           [idProduct, version (V.n dans son extension), tendance, tendance foil, extension, hors anglais (0/1)]
-  - "pk" : pour chaque idProduct Pokémon présent dans data/pokemon.json, [tendance, tendance foil]
+           [idProduct, version (V.n dans son extension), tendance, tendance foil, extension, hors anglais (0/1), prix le plus bas]
+  - "pk" : pour chaque idProduct Pokémon présent dans data/pokemon.json, [tendance, tendance foil, prix le plus bas]
 Jeux Cardmarket : 6 = Pokémon, 18 = One Piece.
 """
 import json, os, re, sys, urllib.request, datetime
@@ -38,15 +38,11 @@ def prices(game):
     d = get(f'{BASE}/priceGuide/price_guide_{game}.json')
     out = {}
     lst = as_list(d, 'priceGuides', 'priceGuide')
-    if lst and game == 18:
-        sample = [x for x in lst if x.get('idProduct') in (747876, 747877)]
-        json.dump({'fields': sorted(lst[0].keys()), 'top': {k: v for k, v in d.items() if not isinstance(v, list)}, 'sample': sample},
-                  open(os.path.join(ROOT, 'data', 'priceguide-sample.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     for p in lst:
         pid = p.get('idProduct')
         if pid is None:
             continue
-        out[int(pid)] = (num(p.get('trend')), num(p.get('trend-foil') or p.get('trendFoil')))
+        out[int(pid)] = (num(p.get('trend')), num(p.get('trend-foil') or p.get('trendFoil')), num(p.get('low')))
     print(f'jeu {game} : {len(out)} prix', file=sys.stderr)
     return out
 
@@ -92,8 +88,8 @@ def main():
             rows = []
             for e, ids in exps.items():
                 for v, pid in enumerate(sorted(ids), 1):
-                    t, tf = pr.get(pid, (None, None))
-                    rows.append([pid, v, t, tf, exp_names.get(e, ''), exp_foreign.get(e, 0)])
+                    t, tf, low = pr.get(pid, (None, None, None))
+                    rows.append([pid, v, t, tf, exp_names.get(e, ''), exp_foreign.get(e, 0), low])
             rows.sort(key=lambda r: (r[5], r[0]))
             result['op'][code] = rows
     except Exception as e:  # on garde le fichier précédent pour la partie qui échoue
