@@ -37,7 +37,12 @@ def num(x):
 def prices(game):
     d = get(f'{BASE}/priceGuide/price_guide_{game}.json')
     out = {}
-    for p in as_list(d, 'priceGuides', 'priceGuide'):
+    lst = as_list(d, 'priceGuides', 'priceGuide')
+    if lst and game == 18:
+        sample = [x for x in lst if x.get('idProduct') in (747876, 747877)]
+        json.dump({'fields': sorted(lst[0].keys()), 'top': {k: v for k, v in d.items() if not isinstance(v, list)}, 'sample': sample},
+                  open(os.path.join(ROOT, 'data', 'priceguide-sample.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    for p in lst:
         pid = p.get('idProduct')
         if pid is None:
             continue
