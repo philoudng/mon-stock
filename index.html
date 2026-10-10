@@ -217,6 +217,8 @@ mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 1px
   .item .meta{grid-row:2}
   .item .ops{grid-row:3;grid-column:1 / -1;justify-content:flex-start;margin-left:-7px}
 }
+.row-cat{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,2fr);gap:10px}
+@media (max-width:380px){ .row-cat{grid-template-columns:1fr} }
 .namebtn{font:inherit;font-weight:600;color:var(--fg);background:none;border:0;padding:0;text-align:left;cursor:pointer;overflow-wrap:anywhere}
 .namebtn:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
 .sell-edit{background:var(--accent-soft)}
@@ -473,7 +475,10 @@ td.zero{color:var(--muted)}
         <input type="file" id="scan-file" class="vh" accept="image/*" aria-label="Importer une photo de la carte">
       </div>
       <div class="scan-out" id="scan-out" hidden></div>
-      <label>Article<input id="g-lib" required maxlength="80" placeholder="Ex. Display, carte gradée, booster"></label>
+      <div class="row-cat">
+        <label>Catégorie<select id="g-cat"><option value="">—</option><option>Carte</option><option>Carte gradée</option><option>Booster</option><option>Display</option><option>Coffret / ETB</option><option>Deck</option><option>Tin / Pokébox</option><option>Lot</option><option>Accessoire</option><option>Autre</option></select></label>
+        <label>Article<input id="g-lib" required maxlength="80" placeholder="Ex. Dracaufeu ex, Display OP13…"></label>
+      </div>
       <label>Lien Cardmarket<input id="g-lien" type="url" maxlength="400" placeholder="https://www.cardmarket.com/fr/…"></label>
       <div class="row2">
         <label id="g-montant-wrap"><span id="g-montant-lbl">Prix payé (€)</span><input id="g-montant" type="text" inputmode="decimal" autocomplete="off" required placeholder="Ex. 25 ou 20+40+30"></label>
@@ -542,8 +547,9 @@ td.zero{color:var(--muted)}
       <p class="hint" id="bk-msg" hidden></p>
     </section>
     <details id="footer-details">
-      <summary>Version 45 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 46 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v46</span><span>Scan : lien Cardmarket et article remplis directement dès que la carte est trouvée. Nouveau champ Catégorie (Carte, Display, Booster…) à côté de l&#x27;Article, qui reste libre.</span></li>
         <li><span class="v">v45</span><span>One Piece : la bonne version Cardmarket (V.1, V.2…) et la bonne extension sont choisies selon la version scannée.</span></li>
         <li><span class="v">v44</span><span>Scan : lien Cardmarket direct de la carte rempli automatiquement, avec la tendance du jour (Pokémon et One Piece, mise à jour quotidienne).</span></li>
         <li><span class="v">v43</span><span>Scanner One Piece : zone du numéro un peu rallongée côté gauche.</span></li>
@@ -1015,7 +1021,7 @@ td.zero{color:var(--muted)}
     const q=fold(S.tcgQuery||'').trim();
     $('tcg-search-clear').hidden = !q;
     const words=q.split(/\s+/).filter(Boolean);
-    const hay = t => fold([t.libelle, t.plateforme, t.obtenu?'obtenu':t.sens, moyenLabel(t.moyen), compteName(t.compteId), fdate(t.date)].filter(Boolean).join(' '));
+    const hay = t => fold([t.libelle, t.categorie, t.plateforme, t.obtenu?'obtenu':t.sens, moyenLabel(t.moyen), compteName(t.compteId), fdate(t.date)].filter(Boolean).join(' '));
     const typeOf = t => t.obtenu ? 'obtenu' : t.sens;
     const types = S.tcgTypes || (S.tcgTypes = new Set());
     renderFilters(all_, typeOf);
@@ -1027,7 +1033,7 @@ td.zero{color:var(--muted)}
       l.append(empty('Aucun résultat', words.length ? `Rien ne correspond à « ${S.tcgQuery.trim()} »${what?` parmi les ${what}`:''} dans ${name}.` : `Aucune ligne de ce type (${what}) dans ${name}.`)); return; }
     byMonth(rows, l, t=>{
       const v=t.sens==='vente';
-      const meta=[t.obtenu ? pill('Obtenu','on') : pill(v?'Vente':'Achat', v?'in':'out'), text(fdate(t.date))]; if(t.plateforme) meta.push(text(t.plateforme)); { const pi=payInfo(t); if(pi) meta.push(text(pi)); }
+      const meta=[t.obtenu ? pill('Obtenu','on') : pill(v?'Vente':'Achat', v?'in':'out'), ...(t.categorie?[pill(t.categorie)]:[]), text(fdate(t.date))]; if(t.plateforme) meta.push(text(t.plateforme)); { const pi=payInfo(t); if(pi) meta.push(text(pi)); }
       if(qteOf(t)>1) meta.push(pill(t.obtenu ? `${qteOf(t)} exemplaires` : detailLabel(t)));
       if(t.lien) meta.push(cmLink(t.lien));
       let sub='', subCls='';
@@ -1230,7 +1236,7 @@ td.zero{color:var(--muted)}
     const go=async()=>{
       if(prix.value===''){ msg.textContent='Indique le prix de vente.'; msg.hidden=false; prix.focus(); return; }
       const q=getQ(), pu=num(prix.value), cpu=cents(puOf(t));
-      const d={kind:'tcg', jeu:t.jeu, sens:'vente', libelle:t.libelle, pu, qte:q, montant:cents(pu*q), cpu, cout:cents(cpu*q),
+      const d={kind:'tcg', jeu:t.jeu, sens:'vente', libelle:t.libelle, categorie:t.categorie||undefined, pu, qte:q, montant:cents(pu*q), cpu, cout:cents(cpu*q),
                plateforme:plat.value.trim(), date:date.value||todayISO(), achatId:t._id, createdAt:Date.now()};
       if(t.lien) d.lien=t.lien;
       if(t.img) d.img=t.img;
@@ -1354,16 +1360,17 @@ td.zero{color:var(--muted)}
   $('tcg-search').addEventListener('input',e=>{ S.tcgQuery=e.target.value; S.sellFor=null; S.coteFor=null; render(); });
   $('tcg-search').addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.target.value=''; S.tcgQuery=''; render(); } });
   $('tcg-search-clear').addEventListener('click',()=>{ $('tcg-search').value=''; S.tcgQuery=''; render(); $('tcg-search').focus(); });
+  $('g-cat').addEventListener('change',()=>{ delete $('g-cat').dataset.auto; });
   $('s-achat').addEventListener('click',()=>setSens('achat')); $('s-obtenu').addEventListener('click',()=>setSens('obtenu')); $('s-vente').addEventListener('click',()=>setSens('vente'));
   function resetTcg(){ fG.reset(); S.editing.tcg=null; S.scanCote=null; S.scanImg=null; $('g-date').value=todayISO(); setSens(S.sens); setEditing('tcg',fG,$('f-tcg-title'),`Nouveau mouvement ${gameName(S.game)}`,null); showMsg(fG); }
-  function editTcg(t){ S.editing.tcg=t._id; setSens(t.obtenu?'obtenu':t.sens); $('g-cote').value = lastCote(t) ? lastCote(t).prix : ''; fillMoyens($('g-moyen'),t.sens,t.moyen||''); fillComptes($('g-compte'),t.compteId||''); $('g-lib').value=t.libelle||''; $('g-montant').value= Array.isArray(t.prix)&&t.prix.length>1 ? t.prix.map(fmtNum).join('+') : fmtNum(cents(puOf(t))); $('g-qte').value=qteOf(t); syncG(); $('g-cout').value=typeof t.cpu==='number'?t.cpu:(typeof t.cout==='number'?cents(t.cout/qteOf(t)):''); $('g-plat').value=t.plateforme||''; $('g-date').value=t.date||todayISO(); $('g-cdate').value=t.cdate||''; $('g-lien').value=t.lien||'';
+  function editTcg(t){ S.editing.tcg=t._id; setSens(t.obtenu?'obtenu':t.sens); $('g-cat').value=t.categorie||''; delete $('g-cat').dataset.auto; $('g-cote').value = lastCote(t) ? lastCote(t).prix : ''; fillMoyens($('g-moyen'),t.sens,t.moyen||''); fillComptes($('g-compte'),t.compteId||''); $('g-lib').value=t.libelle||''; $('g-montant').value= Array.isArray(t.prix)&&t.prix.length>1 ? t.prix.map(fmtNum).join('+') : fmtNum(cents(puOf(t))); $('g-qte').value=qteOf(t); syncG(); $('g-cout').value=typeof t.cpu==='number'?t.cpu:(typeof t.cout==='number'?cents(t.cout/qteOf(t)):''); $('g-plat').value=t.plateforme||''; $('g-date').value=t.date||todayISO(); $('g-cdate').value=t.cdate||''; $('g-lien').value=t.lien||'';
     setEditing('tcg',fG,$('f-tcg-title'),'',t._id); $('g-lib').focus(); }
   fG.querySelector('[data-cancel]').addEventListener('click',resetTcg);
   fG.addEventListener('submit',async ev=>{ ev.preventDefault();
     const id=S.editing.tcg, prev=id?S.raw.find(e=>e._id===id):null;
     if(S.sens==='obtenu'){
       const q=Math.max(1,Math.round(num($('g-qte').value)||1));
-      const d={kind:'tcg',jeu:prev?norm(prev).jeu:S.game,sens:'achat',obtenu:true,libelle:$('g-lib').value.trim(),pu:0,qte:q,montant:0,plateforme:$('g-plat').value.trim(),date:$('g-date').value,createdAt:prev?.createdAt||Date.now()};
+      const d={kind:'tcg',jeu:prev?norm(prev).jeu:S.game,sens:'achat',obtenu:true,libelle:$('g-lib').value.trim(),categorie:$('g-cat').value||undefined,pu:0,qte:q,montant:0,plateforme:$('g-plat').value.trim(),date:$('g-date').value,createdAt:prev?.createdAt||Date.now()};
       const lien=$('g-lien').value.trim();
       if(lien){ if(!cmOk(lien)){ showMsg(fG,'Le lien doit être une adresse https://…cardmarket.com/… copiée depuis la fiche de la carte.'); return; } d.lien=lien; }
       const cs = prev && Array.isArray(prev.cotes) ? prev.cotes.slice() : [];
@@ -1376,7 +1383,7 @@ td.zero{color:var(--muted)}
     }
     const terms=parsePrices($('g-montant').value);
     if(!terms){ showMsg(fG,'Écris un prix (ex. 12,50) ou plusieurs prix séparés par + (ex. 20+40+30).'); return; }
-    const d={kind:'tcg',jeu:prev?norm(prev).jeu:S.game,sens:S.sens,libelle:$('g-lib').value.trim(),montant:0,plateforme:$('g-plat').value.trim(),date:$('g-date').value,createdAt:prev?.createdAt||Date.now()};
+    const d={kind:'tcg',jeu:prev?norm(prev).jeu:S.game,sens:S.sens,libelle:$('g-lib').value.trim(),categorie:$('g-cat').value||undefined,montant:0,plateforme:$('g-plat').value.trim(),date:$('g-date').value,createdAt:prev?.createdAt||Date.now()};
     let q;
     if(terms.length>1){ const sum=cents(terms.reduce((a,b)=>a+b,0)); q=terms.length; d.prix=terms; d.qte=q; d.pu=cents(sum/q); d.montant=sum; }
     else { q=Math.max(1,Math.round(num($('g-qte').value)||1)); d.pu=terms[0]; d.qte=q; d.montant=cents(d.pu*q); }
@@ -1400,6 +1407,7 @@ td.zero{color:var(--muted)}
     return 'L’enregistrement n’a pas abouti. Vérifie ta connexion et réessaie.';
   }
   async function save(id,data,form){
+    Object.keys(data).forEach(k=>{ if(data[k]===undefined) delete data[k]; });
     if(!S.col){ const t='L’enregistrement n’est pas disponible dans ce navigateur.'; form?showMsg(form,t):showBanner(t); return false; }
     try{ await (id?S.col.doc(id):S.col.doc()).set(data); return true; }
     catch(e){ form?showMsg(form,errText(e)):showBanner(errText(e)); return false; }
@@ -1616,7 +1624,7 @@ td.zero{color:var(--muted)}
         const ch=document.createElement('div'); ch.className='scan-chips'; ch.style.justifyContent='center';
         c.cmList.forEach(prod=>{ const b=document.createElement('button'); b.type='button'; const t=prod[2]||prod[3];
           b.textContent=`V.${prod[1]}${prod[4]?` · ${prod[4]}`:''}${prod[5]?' (hors anglais)':''}${t?` · ${eur(t)}`:''}`; b.setAttribute('aria-pressed',String(prod[0]===c.cmId));
-          b.addEventListener('click',()=>{ setCmChoice(c, prod, c.cmDate); ch.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); updLink();
+          b.addEventListener('click',()=>{ setCmChoice(c, prod, c.cmDate); applyScan(); ch.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); updLink();
             if(c._pr) c._pr.textContent = c.price ? `Cardmarket V.${c.cmVer}${c.cmExp?` (${c.cmExp})`:''} : ${eur(c.price)} · tendance du ${c.priceDate}` : 'Lien Cardmarket trouvé'; });
           ch.append(b); });
         hero.append(lab, ch);
@@ -1639,7 +1647,7 @@ td.zero{color:var(--muted)}
       b.addEventListener('click',()=>{ nameI.value=n; chips.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); }); chips.append(b); });
     function pick(c, btn){
       chosen=c; listBox.querySelectorAll('.scan-cand').forEach(x=>x.setAttribute('aria-pressed',String(x===btn)));
-      if(c) nameI.value=c.name; updLink(); showHero(c);
+      if(c) nameI.value=c.name; updLink(); showHero(c); applyScan();
     }
     function renderCands(list, err){
       listBox.replaceChildren(); chosen=null; showHero(null);
@@ -1658,7 +1666,7 @@ td.zero{color:var(--muted)}
         const pr=document.createElement('small'); pr.className='pr'; sp.append(pr); c._pr=pr;
         b.append(im,sp); b.addEventListener('click',()=>pick(c,b)); listBox.append(b);
         if(list.length===1 || (game==='onepiece' && i===0)) pick(c,b); });
-      cmEnrich(game, list).then(()=>{ list.forEach(c=>{ if(c._pr) c._pr.textContent = c.price ? `Cardmarket${c.cmVer?` V.${c.cmVer}`:''}${c.cmExp?` (${c.cmExp})`:''} : ${eur(c.price)} · tendance du ${c.priceDate}${fresh(c)?'':' (ancienne, à vérifier)'}` : (c.link&&c.link.includes('cardmarket.com')?'Lien Cardmarket trouvé':''); }); if(chosen){ updLink(); showHero(chosen); } }).catch(()=>{});
+      cmEnrich(game, list).then(()=>{ if(chosen) applyScan(); list.forEach(c=>{ if(c._pr) c._pr.textContent = c.price ? `Cardmarket${c.cmVer?` V.${c.cmVer}`:''}${c.cmExp?` (${c.cmExp})`:''} : ${eur(c.price)} · tendance du ${c.priceDate}${fresh(c)?'':' (ancienne, à vérifier)'}` : (c.link&&c.link.includes('cardmarket.com')?'Lien Cardmarket trouvé':''); }); if(chosen){ updLink(); showHero(chosen); } }).catch(()=>{});
     }
     renderCands(cands, lookupErr);
     out.append(nameL); if(chips.childElementCount) out.append(chips);
@@ -1666,8 +1674,8 @@ td.zero{color:var(--muted)}
     numI.addEventListener('input',()=>{ clearTimeout(tmr); updLink(); if(!hasDB) return; tmr=setTimeout(async()=>{ let l=[], err=false; try{ l=await cardLookup(game, numI.value); }catch(e){ err=true; } renderCands(l, err); },350); });
     // Actions
     const acts=document.createElement('div'); acts.className='scan-acts';
-    const use=document.createElement('button'); use.type='button'; use.className='btn primary'; use.textContent='Remplir le formulaire';
-    use.addEventListener('click',()=>{
+    const use=document.createElement('button'); use.type='button'; use.className='btn primary'; use.textContent='C’est bon';
+    function applyScan(){
       const nm=nameI.value.trim() || (chosen&&chosen.name) || '';
       const num=numI.value.trim();
       let lib;
@@ -1676,13 +1684,16 @@ td.zero{color:var(--muted)}
       if(lib.trim()) $('g-lib').value=lib.trim().slice(0,80);
       const cm=chosen&&chosen.link;
       if(cm && cmOk(cm)) $('g-lien').value=cm;
+      if(!$('g-cat').value || $('g-cat').dataset.auto) { $('g-cat').value='Carte'; $('g-cat').dataset.auto='1'; }
       S.scanCote = (chosen && chosen.price && fresh(chosen)) ? cents(chosen.price) : null;
       S.scanImg = chosen ? (chosen.thumbs||chosen.imgs||[]).slice(0,2) : null;
       if(S.scanCote && S.sens==='obtenu' && !$('g-cote').value) $('g-cote').value=S.scanCote;
+    }
+    use.addEventListener('click',()=>{ applyScan();
       scanClose(); $('g-lib').focus();
     });
     function updLink(){ const cm=chosen&&chosen.link; const q = game==='onepiece' ? (normNum(game,numI.value)||numI.value.trim()||nameI.value.trim()) : [nameI.value.trim(), (chosen&&chosen.setAbbr)||''].filter(Boolean).join(' ') || numI.value.trim(); link.href = cm || cmSearch(game, q); }
-    updLink(); nameI.addEventListener('input',updLink);
+    updLink(); nameI.addEventListener('input',()=>{ updLink(); if(chosen) applyScan(); });
     const again=document.createElement('button'); again.type='button'; again.className='btn'; again.textContent='Rescanner'; again.addEventListener('click',()=>{ scanClose(); camOpen(); });
     const close=document.createElement('button'); close.type='button'; close.className='btn'; close.textContent='Fermer'; close.addEventListener('click',scanClose);
     acts.append(use, link, again, close); out.append(acts);
