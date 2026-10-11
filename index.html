@@ -37,6 +37,13 @@ img{max-width:100%}
 .backup .bk-row{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
 .backup strong{color:var(--fg);font-family:var(--f-display);font-weight:500;font-size:1rem}
 .bk-confirm{background:var(--sunk);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.acct form,.acct .ac-box{display:flex;flex-direction:column;gap:10px;max-width:46ch}
+.acct .actions{align-items:center}
+.hint.warn{color:var(--warn)}
+.hdr-r{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.sync-chip{font:inherit;font-size:.75rem;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--good);border-radius:99px;padding:2px 10px;cursor:pointer;white-space:nowrap}
+.sync-chip.err{color:var(--warn)}
+.sync-chip.busy{color:var(--muted)}
 .dc summary{cursor:pointer;width:max-content;max-width:100%}
 .dc summary strong{margin-right:8px}
 .dc-body{display:flex;flex-direction:column;gap:10px;margin-top:10px;max-width:60ch}
@@ -373,7 +380,7 @@ td.zero{color:var(--muted)}
 <div class="wrap">
   <header>
     <h1>Mon Stock</h1>
-    <span class="date" id="today"></span>
+    <span class="hdr-r"><span class="date" id="today"></span><button type="button" class="sync-chip" id="sync-chip" hidden></button></span>
   </header>
   <div class="goal" id="goal" aria-label="Objectif financier"></div>
 
@@ -381,7 +388,7 @@ td.zero{color:var(--muted)}
   <section class="banner welcome" id="welcome" hidden>
     <strong>Bienvenue sur ta version indépendante de Mon Stock.</strong>
     <span>Tes données sont enregistrées dans cet appareil. Pour retrouver celles de l’ancienne version, importe ta sauvegarde.</span>
-    <label class="btn primary filebtn">Importer une sauvegarde<input type="file" accept="application/json,.json" data-restore class="vh"></label>
+    <span class="actions"><label class="btn primary filebtn">Importer une sauvegarde<input type="file" accept="application/json,.json" data-restore class="vh"></label><button type="button" class="btn" id="welcome-login" hidden>Me connecter à mon compte</button></span>
   </section>
   <p class="banner remind" id="bk-remind" hidden>Pense à sauvegarder tes données de temps en temps. <button type="button" class="linkbtn" data-backup>Sauvegarder maintenant</button></p>
 
@@ -550,6 +557,32 @@ td.zero{color:var(--muted)}
     <div class="cam-bottom"><label class="cam-alt" for="scan-file">Importer une photo</label><button type="button" class="cam-shot" id="cam-shot" aria-label="Prendre la photo"></button><span></span></div>
   </div>
   <footer class="foot">
+    <section class="backup acct" id="acct" aria-label="Compte en ligne">
+      <div class="bk-row"><strong>Compte en ligne</strong><span class="hint" id="ac-state"></span></div>
+      <div class="ac-box" id="ac-setup" hidden>
+        <p class="hint">Pour retrouver tes données sur tous tes appareils sans fichier, avec un e-mail et un mot de passe. Il faut d’abord un projet Supabase (gratuit) : colle ici son adresse et sa clé publique.</p>
+        <label>Adresse du projet (Project URL)<input id="ac-url" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://xxxx.supabase.co"></label>
+        <label>Clé publique (publishable ou anon)<input id="ac-key" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sb_publishable_…"></label>
+        <div class="actions"><button type="button" class="btn primary" id="ac-link">Relier</button></div>
+      </div>
+      <form id="ac-login" hidden novalidate>
+        <p class="hint">Connecte-toi pour garder une copie en ligne et retrouver tes données sur tes autres appareils. Elles restent aussi sur cet appareil, même hors connexion.</p>
+        <label>E-mail<input id="ac-email" type="email" autocomplete="username" autocapitalize="off" spellcheck="false" required></label>
+        <label>Mot de passe<input id="ac-pass" type="password" autocomplete="current-password" required></label>
+        <div class="actions"><button type="submit" class="btn primary">Se connecter</button><button type="button" class="btn" id="ac-signup">Créer mon compte</button><button type="button" class="linkbtn" id="ac-forgot">Mot de passe oublié ?</button></div>
+        <button type="button" class="linkbtn" id="ac-unlink" hidden style="align-self:flex-start;font-weight:500;font-size:.8rem">Changer de projet Supabase</button>
+      </form>
+      <form id="ac-newpass" hidden novalidate>
+        <p class="hint">Choisis ton nouveau mot de passe.</p>
+        <label>Nouveau mot de passe<input id="ac-np" type="password" autocomplete="new-password" minlength="8" required></label>
+        <div class="actions"><button type="submit" class="btn primary">Enregistrer le mot de passe</button></div>
+      </form>
+      <div class="actions" id="ac-in" hidden>
+        <button type="button" class="btn" id="ac-sync">Synchroniser maintenant</button>
+        <button type="button" class="btn" id="ac-out">Se déconnecter</button>
+      </div>
+      <p class="hint" id="ac-msg" hidden></p>
+    </section>
     <section class="backup" aria-label="Sauvegarde">
       <div class="bk-row">
         <strong>Sauvegarde</strong>
@@ -584,8 +617,9 @@ td.zero{color:var(--muted)}
       </details>
     </section>
     <details id="footer-details">
-      <summary>Version 48 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 49 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v49</span><span>Compte en ligne (Supabase) : connexion par e-mail et mot de passe, copie de tes données en ligne et synchronisation automatique entre tes appareils. Tout reste aussi sur l&#x27;appareil, même hors connexion.</span></li>
         <li><span class="v">v48</span><span>Discord : chaque carte ajoutée avec le scan peut être envoyée dans un salon de ton serveur (illustration ou ta photo, prix, cote, lien Cardmarket). Réglage en bas de page.</span></li>
         <li><span class="v">v47</span><span>Lien Cardmarket filtré automatiquement (langue + état minimum Near Mint, modifiables) et « premier prix affiché » ajouté à la cote. Au scan : prix le plus bas Cardmarket en plus de la tendance.</span></li>
         <li><span class="v">v46</span><span>Scan : lien Cardmarket et article remplis directement dès que la carte est trouvée. Nouveau champ Catégorie (Carte, Display, Booster…) à côté de l&#x27;Article, qui reste libre.</span></li>
@@ -1885,6 +1919,12 @@ td.zero{color:var(--muted)}
 
   // ---- Stockage local (dans l'appareil), même interface que l'ancienne base
   const STORE_KEY='monstock-data-v1', BACKUP_KEY='monstock-last-backup';
+  // Compte en ligne (Supabase). La clé publique peut être visible : chaque compte ne lit que ses propres lignes (règles de sécurité de la table).
+  const SUPA_CFG={ url:'', key:'' };
+  const CFG_KEY='monstock-supa', SES_KEY='monstock-session', SYNC_KEY='monstock-sync', SB_TABLE='stock_entries';
+  const lsGet=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } };
+  const lsSet=(k,v)=>{ try{ if(v==null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } };
+  const SY={ busy:false, again:false, timer:null, state:'', err:'', recovery:false, last:0 };
   function localCollection(key){
     let listeners=[];
     const read=()=>{ try{ const o=JSON.parse(localStorage.getItem(key)||'{}'); return (o && typeof o==='object' && !Array.isArray(o)) ? o : {}; }catch(e){ return {}; } };
@@ -1895,11 +1935,16 @@ td.zero{color:var(--muted)}
     window.addEventListener('storage', e=>{ if(e.key===key) emit(); });
     return {
       doc(id){ const _id=id||newId(); return { id:_id,
-        async set(data){ const o=read(); o[_id]=JSON.parse(JSON.stringify(data)); write(o); },
-        async delete(){ const o=read(); delete o[_id]; write(o); } }; },
+        async set(data){ const o=read(); o[_id]=JSON.parse(JSON.stringify(data)); write(o); markLocal([_id],[]); },
+        async delete(){ const o=read(); delete o[_id]; write(o); markLocal([],[_id]); } }; },
       onSnapshot(cb){ listeners.push(cb); setTimeout(()=>cb(snap()),0); return ()=>{ listeners=listeners.filter(f=>f!==cb); }; },
       readAll: read,
-      replaceAll(o){ write(o); }
+      replaceAll(o){ const old=read(); write(o); markLocal(Object.keys(o), Object.keys(old).filter(id=>!(id in o))); },
+      applyRemote(rows){ const o=read(); let ch=false;
+        rows.forEach(r=>{ if(!r || typeof r.id!=='string' || !/^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(r.id)) return;
+          if(r.deleted || r.data==null){ if(r.id in o){ delete o[r.id]; ch=true; } }
+          else if(typeof r.data==='object' && !Array.isArray(r.data) && typeof r.data.kind==='string'){ if(!(r.id in o) || stableStr(o[r.id])!==stableStr(r.data)){ o[r.id]=r.data; ch=true; } } });
+        if(ch) write(o); return ch; }
     };
   }
   (function connect(){
@@ -1916,11 +1961,12 @@ td.zero{color:var(--muted)}
   function renderBackup(){
     const info=$('bk-info'); if(!info) return;
     const n=S.raw.length, lb=lastBackup();
-    info.textContent = `${n} ligne${n>1?'s':''} enregistrée${n>1?'s':''} sur cet appareil · dernière sauvegarde : ${fmtAgo(lb)}`;
+    const sy=syncState(), online = isIn() && sy.lastOk && Date.now()-sy.lastOk < 7*86400000;
+    info.textContent = `${n} ligne${n>1?'s':''} enregistrée${n>1?'s':''} sur cet appareil${online?' et en ligne':''} · dernier fichier de sauvegarde : ${fmtAgo(lb)}`;
     const wb=$('welcome');
     if(wb) wb.hidden = n>0;
     const rem=$('bk-remind');
-    if(rem) rem.hidden = !(n>0 && (!lb || Date.now()-lb > 14*86400000));
+    if(rem) rem.hidden = online || !(n>0 && (!lb || Date.now()-lb > 14*86400000));
   }
   async function doBackup(){
     const data=S.col?S.col.readAll():{};
@@ -1946,7 +1992,8 @@ td.zero{color:var(--muted)}
     const box=$('bk-confirm'); box.hidden=false; box.replaceChildren();
     const n=Object.keys(clean).length, cur=S.raw.length;
     const p=document.createElement('p'); p.className='hint';
-    p.textContent = cur ? `Remplacer les ${cur} lignes de cet appareil par les ${n} lignes de la sauvegarde ? Ce qui n’est pas dans la sauvegarde sera perdu.` : `Importer les ${n} lignes de la sauvegarde ?`;
+    const where = isIn() ? 'de cet appareil et de ton compte en ligne' : 'de cet appareil';
+    p.textContent = cur ? `Remplacer les ${cur} lignes ${where} par les ${n} lignes de la sauvegarde ? Ce qui n’est pas dans la sauvegarde sera perdu.` : `Importer les ${n} lignes de la sauvegarde ?`;
     const ok=document.createElement('button'); ok.type='button'; ok.className='btn primary'; ok.textContent= cur?'Remplacer':'Importer';
     const no=document.createElement('button'); no.type='button'; no.className='btn'; no.textContent='Annuler';
     ok.addEventListener('click',()=>{ try{ S.col.replaceAll(clean); box.hidden=true; showBkMsg(`${n} lignes restaurées.`); }catch(e){ showBkMsg(errText(e),true); } });
@@ -2086,6 +2133,239 @@ td.zero{color:var(--muted)}
     finally{ b.disabled=false; }
   });
   renderDc();
+
+  // ---- Compte en ligne (Supabase) : copie des données sur un serveur, synchronisée entre appareils.
+  // Les données restent d'abord sur l'appareil (fonctionne hors connexion) ; chaque ligne modifiée est envoyée,
+  // puis on récupère ce qui a changé ailleurs. Une suppression est envoyée comme une ligne « supprimée ».
+  function stableStr(v){ return JSON.stringify(v, (k,x)=> x && typeof x==='object' && !Array.isArray(x) ? Object.keys(x).sort().reduce((o,kk)=>(o[kk]=x[kk],o),{}) : x); }
+  function sbCfg(){ if(SUPA_CFG.url && SUPA_CFG.key) return {url:SUPA_CFG.url, key:SUPA_CFG.key, fixed:true}; const c=lsGet(CFG_KEY); return c && c.url && c.key ? c : null; }
+  function getSes(){ const s=lsGet(SES_KEY); return s && s.access_token && s.user && s.user.id ? s : null; }
+  function setSes(j){ if(!j){ lsSet(SES_KEY,null); return null; }
+    const s={ access_token:j.access_token, refresh_token:j.refresh_token, expires_at: +j.expires_at || Math.floor(Date.now()/1000)+(+j.expires_in||3600), user:{ id:j.user&&j.user.id, email:j.user&&j.user.email } };
+    lsSet(SES_KEY,s); return s; }
+  function isIn(){ return !!(sbCfg() && getSes()); }
+  function syncState(){ const s=lsGet(SYNC_KEY)||{}; return { uid:s.uid||null, lastPull:s.lastPull||null, lastOk:+s.lastOk||0, dirty:s.dirty&&typeof s.dirty==='object'?s.dirty:{}, dels:s.dels&&typeof s.dels==='object'?s.dels:{}, n:+s.n||0 }; }
+  function saveSync(s){ lsSet(SYNC_KEY,s); }
+  function pendingCount(s){ s=s||syncState(); return Object.keys(s.dirty).length+Object.keys(s.dels).length; }
+  function markLocal(sets, dels){
+    const s=syncState();
+    sets.forEach(id=>{ s.n++; s.dirty[id]=s.n; delete s.dels[id]; });
+    dels.forEach(id=>{ s.n++; s.dels[id]=s.n; delete s.dirty[id]; });
+    saveSync(s); if(isIn()){ scheduleSync(1500); renderAcct(); }
+  }
+  function sbErr(kind, status, msg, code){ return {kind, status, msg:msg||'', code:code||''}; }
+  async function sbFetch(path, o){
+    o=o||{}; const c=o.cfg||sbCfg(); if(!c) throw sbErr('nocfg');
+    const h={ apikey:c.key };
+    if(o.token) h.Authorization='Bearer '+o.token;
+    if(o.body!==undefined) h['Content-Type']='application/json';
+    if(o.prefer) h.Prefer=o.prefer;
+    const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(), o.timeout||20000);
+    let r;
+    try{ r=await fetch(c.url.replace(/\/+$/,'')+path, { method:o.method||'GET', headers:h, body:o.body!==undefined?JSON.stringify(o.body):undefined, signal:ctl.signal, credentials:'omit', cache:'no-store' }); }
+    catch(e){ throw sbErr(navigator.onLine===false?'offline':'network'); }
+    finally{ clearTimeout(t); }
+    let j=null; const txt=await r.text().catch(()=> ''); if(txt){ try{ j=JSON.parse(txt); }catch(e){} }
+    if(!r.ok) throw sbErr('http', r.status, j&&(j.msg||j.message||j.error_description||j.error), j&&(j.error_code||j.code||j.error));
+    return j;
+  }
+  let refreshing=null;
+  async function sbToken(force){
+    const s=getSes(); if(!s) throw sbErr('nosession');
+    if(!force && s.expires_at-90 > Date.now()/1000) return s.access_token;
+    if(!refreshing) refreshing=(async()=>{
+      try{ const j=await sbFetch('/auth/v1/token?grant_type=refresh_token',{method:'POST', body:{refresh_token:s.refresh_token}}); return setSes({...j, user:j.user||s.user}).access_token; }
+      catch(e){ if(e.kind==='http' && e.status>=400 && e.status<500 && e.status!==429){ const now=getSes(); if(now && now.refresh_token!==s.refresh_token) return now.access_token; setSes(null); throw sbErr('expired'); } throw e; }
+      finally{ refreshing=null; } })();
+    return refreshing;
+  }
+  async function sbApi(path, o){
+    let t=await sbToken();
+    try{ return await sbFetch(path,{...o, token:t}); }
+    catch(e){ if(e.kind==='http' && e.status===401 && /jwt|token/i.test(e.msg+e.code)){ t=await sbToken(true); return sbFetch(path,{...o, token:t}); } throw e; }
+  }
+  function scheduleSync(ms){ if(!isIn()) return; clearTimeout(SY.timer); SY.timer=setTimeout(syncNow, ms||0); }
+  async function syncNow(){
+    if(!S.col || !isIn()){ renderAcct(); return; }
+    if(SY.busy){ SY.again=true; return; }
+    SY.busy=true; SY.state='sync'; SY.last=Date.now(); renderAcct();
+    try{
+      const ses=getSes(); let s=syncState();
+      if(s.uid!==ses.user.id){ s.uid=ses.user.id; s.lastPull=null; saveSync(s); }  // premier passage de ce compte sur cet appareil : fusion
+      const first=!s.lastPull;
+      // 1) Ce qui a changé en ligne depuis la dernière fois (avec 2 min de marge)
+      const since = first ? null : new Date(Date.parse(s.lastPull)-120000).toISOString();
+      let rows=[];
+      for(let off=0;;off+=1000){
+        const page=await sbApi(`/rest/v1/${SB_TABLE}?select=id,data,deleted,updated_at${since?`&updated_at=gt.${encodeURIComponent(since)}`:''}&order=updated_at.asc,id.asc&limit=1000&offset=${off}`);
+        const list=Array.isArray(page)?page:[]; rows=rows.concat(list); if(list.length<1000) break; }
+      s=syncState();  // relu : des changements ont pu être faits pendant l'attente
+      S.col.applyRemote(rows.filter(r=>!(r.id in s.dirty) && !(r.id in s.dels)));
+      if(first){ const online=new Set(rows.filter(r=>!r.deleted).map(r=>r.id));
+        Object.keys(S.col.readAll()).forEach(id=>{ if(!online.has(id) && !(id in s.dirty)){ s.n++; s.dirty[id]=s.n; } }); }
+      let max=s.lastPull ? Date.parse(s.lastPull) : 0, maxStr=s.lastPull||'1970-01-01T00:00:00Z';
+      rows.forEach(r=>{ const t=Date.parse(r.updated_at); if(isFinite(t) && t>max){ max=t; maxStr=r.updated_at; } });
+      s.lastPull=maxStr; saveSync(s);
+      // 2) Envoyer les changements de cet appareil
+      for(let round=0; round<5; round++){
+        const st=syncState(), local=S.col.readAll(), body=[], sent={};
+        Object.keys(st.dirty).forEach(id=>{ body.push(local[id] ? {user_id:st.uid, id, data:local[id], deleted:false} : {user_id:st.uid, id, data:null, deleted:true}); sent[id]=['dirty',st.dirty[id]]; });
+        Object.keys(st.dels).forEach(id=>{ body.push({user_id:st.uid, id, data:null, deleted:true}); sent[id]=['dels',st.dels[id]]; });
+        if(!body.length) break;
+        for(let i=0;i<body.length;i+=400) await sbApi(`/rest/v1/${SB_TABLE}?on_conflict=user_id,id`,{method:'POST', body:body.slice(i,i+400), prefer:'resolution=merge-duplicates,return=minimal'});
+        const s2=syncState(); Object.keys(sent).forEach(id=>{ const [k,v]=sent[id]; if(s2[k][id]===v) delete s2[k][id]; }); saveSync(s2);
+      }
+      const s3=syncState(); s3.lastOk=Date.now(); saveSync(s3);
+      SY.state='ok'; SY.err='';
+    }catch(e){
+      SY.state='err'; SY.err=syncErrText(e);
+      if(e && e.kind==='expired'){ SY.state=''; acMsg(SY.err,true); SY.err=''; }
+    }finally{
+      SY.busy=false; renderAcct(); renderBackup();
+      if(SY.again){ SY.again=false; scheduleSync(300); }
+    }
+  }
+  function syncErrText(e){
+    if(!e) return 'Synchronisation impossible.';
+    if(e.kind==='offline') return 'Hors connexion : tes changements partiront au retour du réseau.';
+    if(e.kind==='network') return 'Le serveur en ligne ne répond pas (projet Supabase en pause ?). Tes données restent sur cet appareil.';
+    if(e.kind==='expired') return 'Ta session a expiré : reconnecte-toi (tes données sont toujours là).';
+    if(e.kind==='http' && (e.status===404 || /PGRST205|42P01/.test(e.code))) return 'La table n’existe pas encore dans Supabase : colle le script SQL (SQL Editor → Run).';
+    if(e.kind==='http' && (e.status===401 || e.status===403 || /42501/.test(e.code))) return 'Le serveur refuse l’accès (clé ou règles de sécurité). Vérifie la configuration Supabase.';
+    if(e.kind==='http' && e.status===429) return 'Trop de demandes d’un coup : nouvel essai dans une minute.';
+    if(e.kind==='http' && e.status>=500) return 'Le serveur en ligne a un souci (projet en pause ?). Tes données restent sur cet appareil.';
+    return 'Synchronisation impossible'+(e.msg?` (${String(e.msg).slice(0,120)})`:'')+'.';
+  }
+  function authErrText(e, what){
+    const c=String((e&&e.code)||''), m=String((e&&e.msg)||'');
+    if(e && (e.kind==='offline' || e.kind==='network')) return 'Pas de connexion avec le serveur. Réessaie dans un instant.';
+    if(c==='invalid_credentials' || /invalid login credentials|invalid_grant/i.test(m+c)) return 'E-mail ou mot de passe incorrect.';
+    if(c==='email_not_confirmed' || /not confirmed/i.test(m)) return 'Confirme d’abord ton adresse avec le lien reçu par e-mail.';
+    if(c==='user_already_exists' || /already registered|already exists/i.test(m)) return 'Un compte existe déjà avec cet e-mail : connecte-toi.';
+    if(c==='weak_password' || /password should|weak/i.test(m)) return 'Mot de passe trop faible : au moins 8 caractères, mélange lettres et chiffres.';
+    if(c==='signup_disabled' || /signups? not allowed|disabled/i.test(m)) return 'La création de compte est fermée sur ce projet.';
+    if(c==='validation_failed' || /invalid.*email|email.*invalid/i.test(m)) return 'Adresse e-mail invalide.';
+    if(c==='over_email_send_rate_limit' || (e && e.status===429)) return 'Trop d’essais : attends quelques minutes.';
+    return `${what} impossible${m?` (${m.slice(0,120)})`:''}.`;
+  }
+  function acMsg(t,isErr){ const m=$('ac-msg'); m.textContent=t||''; m.hidden=!t; m.className=isErr?'msg':'hint'; }
+  function fmtWhen(ts){ const d=new Date(ts), n=new Date(); const hm=d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    return d.toDateString()===n.toDateString() ? `à ${hm}` : `le ${d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})} à ${hm}`; }
+  let lastShownErr='';
+  function renderAcct(){
+    const c=sbCfg(), ses=getSes(), st=$('ac-state'); if(!st) return;
+    $('ac-setup').hidden=!!c;
+    $('ac-login').hidden=!c || !!ses || SY.recovery;
+    $('ac-newpass').hidden=!SY.recovery;
+    $('ac-in').hidden=!ses || SY.recovery;
+    $('ac-unlink').hidden=!(c && !c.fixed);
+    const wl=$('welcome-login'); if(wl) wl.hidden=!c || !!ses;
+    let t='', cls='hint';
+    if(!c) t='pas encore activé';
+    else if(!ses) t='non connecté';
+    else { const s=syncState(), pend=pendingCount(s), em=ses.user.email||'connecté';
+      if(SY.state==='sync') t=`${em} · synchronisation…`;
+      else if(SY.state==='err'){ t=`${em} · ${pend?`${pend} changement${pend>1?'s':''} en attente`:'pas synchronisé'}`; cls='hint warn'; }
+      else { t=`${em} · ${s.lastOk?`à jour ${fmtWhen(s.lastOk)}`:'connecté'}${pend?` · ${pend} en attente`:''}`; if(s.lastOk && !pend) cls='hint dc-ok'; } }
+    st.textContent=t; st.className=cls;
+    if(ses && SY.err && SY.err!==lastShownErr){ acMsg(SY.err,true); lastShownErr=SY.err; }
+    else if(ses && !SY.err && lastShownErr){ acMsg(''); lastShownErr=''; }
+    const chip=$('sync-chip');
+    if(chip){ chip.hidden=!ses;
+      if(ses){ const pend=pendingCount();
+        chip.textContent = SY.state==='sync' ? '☁ Synchro…' : SY.state==='err' ? (navigator.onLine===false?'☁ Hors ligne':'☁ Pas à jour') : pend ? '☁ En attente' : '☁ À jour';
+        chip.className='sync-chip'+(SY.state==='err'?' err':SY.state==='sync'||pend?' busy':'');
+        chip.title = t; } }
+  }
+  const siteUrl=()=>location.origin+location.pathname;
+  async function afterLogin(msg){
+    SY.err=''; lastShownErr=''; acMsg(msg||''); $('ac-pass').value=''; renderAcct();
+    await syncNow();
+    if(SY.state==='ok'){ const n=S.raw.length; acMsg(`${msg?msg+' ':''}Tes ${n} ligne${n>1?'s':''} ${n>1?'sont':'est'} à jour en ligne.`); }
+  }
+  function readCreds(signup){
+    const email=$('ac-email').value.trim(), pass=$('ac-pass').value;
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ acMsg('Écris ton adresse e-mail.',true); $('ac-email').focus(); return null; }
+    if(!pass){ acMsg('Écris ton mot de passe.',true); $('ac-pass').focus(); return null; }
+    if(signup && pass.length<8){ acMsg('Choisis un mot de passe d’au moins 8 caractères.',true); $('ac-pass').focus(); return null; }
+    return {email, pass};
+  }
+  function busyBtn(b, on, label){ if(!b) return; if(on){ b.dataset.txt=b.textContent; b.textContent=label||'…'; b.disabled=true; } else { b.textContent=b.dataset.txt||b.textContent; b.disabled=false; } }
+  $('ac-login').addEventListener('submit', async ev=>{ ev.preventDefault();
+    const cr=readCreds(false); if(!cr) return; const b=ev.submitter||$('ac-login').querySelector('[type=submit]');
+    busyBtn(b,true,'Connexion…'); acMsg('');
+    try{ const j=await sbFetch('/auth/v1/token?grant_type=password',{method:'POST', body:{email:cr.email, password:cr.pass}}); setSes(j); await afterLogin('Connecté ✓'); }
+    catch(e){ acMsg(authErrText(e,'Connexion'),true); }
+    finally{ busyBtn(b,false); }
+  });
+  $('ac-signup').addEventListener('click', async ()=>{
+    const cr=readCreds(true); if(!cr) return; const b=$('ac-signup'); busyBtn(b,true,'Création…'); acMsg('');
+    try{ const j=await sbFetch(`/auth/v1/signup?redirect_to=${encodeURIComponent(siteUrl())}`,{method:'POST', body:{email:cr.email, password:cr.pass}});
+      if(j && j.access_token){ setSes(j); await afterLogin('Compte créé ✓'); }
+      else acMsg('Compte créé : ouvre le lien de confirmation reçu par e-mail (regarde aussi les indésirables), puis reviens te connecter ici.'); }
+    catch(e){ acMsg(authErrText(e,'Création du compte'),true); }
+    finally{ busyBtn(b,false); }
+  });
+  $('ac-forgot').addEventListener('click', async ()=>{
+    const email=$('ac-email').value.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ acMsg('Écris d’abord ton adresse e-mail ci-dessus, puis touche « Mot de passe oublié ? ».',true); $('ac-email').focus(); return; }
+    try{ await sbFetch(`/auth/v1/recover?redirect_to=${encodeURIComponent(siteUrl())}`,{method:'POST', body:{email}}); acMsg('Si un compte existe avec cette adresse, un e-mail vient de partir avec un lien pour choisir un nouveau mot de passe.'); }
+    catch(e){ acMsg(authErrText(e,'Envoi de l’e-mail'),true); }
+  });
+  $('ac-newpass').addEventListener('submit', async ev=>{ ev.preventDefault();
+    const pw=$('ac-np').value; if(pw.length<8){ acMsg('Au moins 8 caractères.',true); return; }
+    const b=$('ac-newpass').querySelector('[type=submit]'); busyBtn(b,true,'Enregistrement…');
+    try{ await sbApi('/auth/v1/user',{method:'PUT', body:{password:pw}}); SY.recovery=false; $('ac-np').value=''; await afterLogin('Nouveau mot de passe enregistré ✓'); }
+    catch(e){ acMsg(authErrText(e,'Changement de mot de passe'),true); }
+    finally{ busyBtn(b,false); }
+  });
+  $('ac-sync').addEventListener('click', ()=>{ SY.err=''; lastShownErr=''; acMsg(''); syncNow(); });
+  $('ac-out').addEventListener('click', async ()=>{
+    const s=getSes(); setSes(null); clearTimeout(SY.timer); SY.state=''; SY.err=''; lastShownErr=''; SY.recovery=false;
+    acMsg('Déconnecté. Tes données restent sur cet appareil.'); renderAcct(); renderBackup();
+    if(s) sbFetch('/auth/v1/logout',{method:'POST', token:s.access_token, timeout:6000}).catch(()=>{});
+  });
+  $('ac-link').addEventListener('click', async ()=>{
+    let url=$('ac-url').value.trim().replace(/\/+$/,'').replace(/\/(rest|auth)\/v1.*$/,''); const key=$('ac-key').value.trim();
+    if(!/^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(url)){ acMsg('Colle l’adresse du projet, du type https://xxxx.supabase.co',true); return; }
+    let role=''; try{ if(/^eyJ/.test(key)) role=JSON.parse(atob(key.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).role||''; }catch(e){}
+    if(/^sb_secret_/.test(key) || role==='service_role'){ acMsg('C’est la clé secrète : ne la mets jamais sur le site. Prends la clé « publishable » (ou « anon »).',true); return; }
+    if(key.length<20){ acMsg('Colle la clé publique (publishable ou anon) du projet.',true); return; }
+    const b=$('ac-link'); busyBtn(b,true,'Vérification…');
+    try{ await sbFetch('/auth/v1/settings',{cfg:{url,key}, timeout:12000}); lsSet(CFG_KEY,{url,key}); acMsg('Projet relié ✓ Crée ton compte ou connecte-toi.'); renderAcct(); }
+    catch(e){ acMsg(e.kind==='http' ? 'Le projet refuse cette clé. Vérifie l’adresse et la clé publique.' : 'Impossible de joindre ce projet. Vérifie l’adresse.',true); }
+    finally{ busyBtn(b,false); }
+  });
+  $('ac-unlink').addEventListener('click', ()=>{ lsSet(CFG_KEY,null); setSes(null); acMsg(''); renderAcct(); });
+  function goAcct(){ const a=$('acct'); a.scrollIntoView({behavior:'smooth', block:'start'}); setTimeout(()=>{ const f=!$('ac-login').hidden ? $('ac-email') : null; if(f) f.focus({preventScroll:true}); }, 400); }
+  $('sync-chip').addEventListener('click', goAcct);
+  $('welcome-login').addEventListener('click', goAcct);
+  // Retour d'un lien reçu par e-mail (confirmation du compte, nouveau mot de passe)
+  async function readAuthLink(){
+    if(!location.hash || location.hash.length<2) return;
+    const h=new URLSearchParams(location.hash.slice(1));
+    if(!h.get('access_token') && !h.get('error') && !h.get('error_code')) return;
+    history.replaceState(null,'',location.pathname+location.search);
+    if(h.get('error') || h.get('error_code')){
+      acMsg(h.get('error_code')==='otp_expired' ? 'Ce lien a expiré ou a déjà servi : redemande-en un.' : `Le lien n’a pas fonctionné${h.get('error_description')?` (${h.get('error_description').slice(0,120)})`:''}.`, true);
+      renderAcct(); return; }
+    if(!sbCfg()){ acMsg('Ce lien vient de ton compte en ligne, mais le projet n’est pas encore relié sur cet appareil.',true); return; }
+    try{
+      const tok=h.get('access_token');
+      const u=await sbFetch('/auth/v1/user',{token:tok});
+      setSes({access_token:tok, refresh_token:h.get('refresh_token'), expires_at:+h.get('expires_at')||0, expires_in:+h.get('expires_in')||3600, user:u});
+      if(h.get('type')==='recovery'){ SY.recovery=true; renderAcct(); goAcct(); setTimeout(()=>$('ac-np').focus({preventScroll:true}),450); return; }
+      goAcct(); await afterLogin(h.get('type')==='signup' ? 'Adresse confirmée, tu es connecté ✓' : 'Connecté ✓');
+    }catch(e){ acMsg('Le lien n’a pas fonctionné : reconnecte-toi avec ton e-mail et ton mot de passe.',true); renderAcct(); }
+  }
+  readAuthLink(); window.addEventListener('hashchange', readAuthLink);
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && Date.now()-SY.last>15000) scheduleSync(0); });
+  window.addEventListener('online',()=>scheduleSync(0));
+  window.addEventListener('offline',()=>renderAcct());
+  setInterval(()=>{ if(document.visibilityState==='visible' && Date.now()-SY.last>55000) scheduleSync(0); }, 60000);
+  window.addEventListener('storage',e=>{ if(e.key===SES_KEY || e.key===CFG_KEY) renderAcct(); });
+  renderAcct();
+  if(isIn()) scheduleSync(0);
 
   // ---- Application installable (fonctionne hors connexion)
   if('serviceWorker' in navigator && location.protocol==='https:'){ window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{ try{ r.update(); }catch(e){} }).catch(()=>{}); }); }
