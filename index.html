@@ -37,6 +37,18 @@ img{max-width:100%}
 .backup .bk-row{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
 .backup strong{color:var(--fg);font-family:var(--f-display);font-weight:500;font-size:1rem}
 .bk-confirm{background:var(--sunk);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.dc summary{cursor:pointer;width:max-content;max-width:100%}
+.dc summary strong{margin-right:8px}
+.dc-body{display:flex;flex-direction:column;gap:10px;margin-top:10px;max-width:60ch}
+.dc-body ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:2px}
+.dc-ok{color:var(--good)!important;font-weight:600}
+.chk{flex-direction:row!important;align-items:center;gap:8px!important;font-size:.88rem!important;font-weight:500!important;color:var(--fg)!important;cursor:pointer}
+.chk input{width:18px;height:18px;margin:0;padding:0;flex:none;accent-color:var(--accent)}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:95;display:flex;align-items:center;gap:12px;width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;background:var(--fg);color:var(--bg);padding:10px 14px;border-radius:10px;font-size:.88rem;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.toast.err{background:var(--bad);color:#fff}
+.toast span{min-width:0}
+.toast button{font:inherit;font-weight:600;background:none;border:0;color:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:0;white-space:nowrap}
+.toast button[aria-label]{text-decoration:none;opacity:.8}
 
 /* Layout : registre personnel — bandeau de chiffres clés, onglets (trésorerie, abonnements, un par TCG, bilan), formulaire à gauche, registre par mois à droite */
 :root{
@@ -550,9 +562,31 @@ td.zero{color:var(--muted)}
       <div id="bk-confirm" class="bk-confirm" hidden></div>
       <p class="hint" id="bk-msg" hidden></p>
     </section>
+    <section class="backup" aria-label="Discord">
+      <details class="dc" id="dc-box">
+        <summary><strong>Discord</strong><span class="hint" id="dc-state">non relié</span></summary>
+        <div class="dc-body">
+          <p class="hint" style="margin:0">Chaque carte ajoutée avec le scan est envoyée dans un salon de ton serveur (image, prix, cote, lien Cardmarket). Pour obtenir l’adresse, dans Discord :</p>
+          <ol class="hint"><li>Paramètres du salon (roue dentée) → Intégrations → Webhooks</li><li>Nouveau webhook → Copier l’URL du webhook</li><li>Colle-la ci-dessous puis Enregistrer</li></ol>
+          <label>Adresse du webhook
+            <input id="dc-url" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://discord.com/api/webhooks/…">
+          </label>
+          <label class="chk"><input type="checkbox" id="dc-auto" checked> Envoyer automatiquement chaque carte ajoutée avec le scan</label>
+          <label class="chk"><input type="checkbox" id="dc-prix" checked> Montrer ce que j’ai payé / vendu dans le message</label>
+          <div class="actions">
+            <button type="button" class="btn primary" id="dc-save">Enregistrer</button>
+            <button type="button" class="btn" id="dc-test">Envoyer un test</button>
+            <button type="button" class="btn" id="dc-del" hidden>Retirer</button>
+          </div>
+          <p class="hint" id="dc-msg" hidden></p>
+          <p class="hint" style="margin:0">L’adresse reste sur cet appareil (pas dans les sauvegardes) : à recoller sur chaque téléphone ou ordinateur. Quiconque la connaît peut écrire dans le salon, ne la partage pas.</p>
+        </div>
+      </details>
+    </section>
     <details id="footer-details">
-      <summary>Version 47 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 48 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v48</span><span>Discord : chaque carte ajoutée avec le scan peut être envoyée dans un salon de ton serveur (illustration ou ta photo, prix, cote, lien Cardmarket). Réglage en bas de page.</span></li>
         <li><span class="v">v47</span><span>Lien Cardmarket filtré automatiquement (langue + état minimum Near Mint, modifiables) et « premier prix affiché » ajouté à la cote. Au scan : prix le plus bas Cardmarket en plus de la tendance.</span></li>
         <li><span class="v">v46</span><span>Scan : lien Cardmarket et article remplis directement dès que la carte est trouvée. Nouveau champ Catégorie (Carte, Display, Booster…) à côté de l&#x27;Article, qui reste libre.</span></li>
         <li><span class="v">v45</span><span>One Piece : la bonne version Cardmarket (V.1, V.2…) et la bonne extension sont choisies selon la version scannée.</span></li>
@@ -1388,7 +1422,7 @@ td.zero{color:var(--muted)}
   $('g-cond').addEventListener('change',applyLinkFilters);
   $('g-lien').addEventListener('change',applyLinkFilters);
   $('s-achat').addEventListener('click',()=>setSens('achat')); $('s-obtenu').addEventListener('click',()=>setSens('obtenu')); $('s-vente').addEventListener('click',()=>setSens('vente'));
-  function resetTcg(){ fG.reset(); $('g-lang').value=defaultLang(); $('g-cond').value='2'; S.editing.tcg=null; S.scanCote=null; S.scanMin=null; S.scanImg=null; $('g-date').value=todayISO(); setSens(S.sens); setEditing('tcg',fG,$('f-tcg-title'),`Nouveau mouvement ${gameName(S.game)}`,null); showMsg(fG); }
+  function resetTcg(){ fG.reset(); $('g-lang').value=defaultLang(); $('g-cond').value='2'; S.editing.tcg=null; S.scanCote=null; S.scanMin=null; S.scanImg=null; S.scanSend=null; $('g-date').value=todayISO(); setSens(S.sens); setEditing('tcg',fG,$('f-tcg-title'),`Nouveau mouvement ${gameName(S.game)}`,null); showMsg(fG); }
   function editTcg(t){ S.editing.tcg=t._id; { const cp=cmParams(t.lien||''); $('g-lang').value=cp.lang||defaultLang(); $('g-cond').value=cp.cond||'2'; } setSens(t.obtenu?'obtenu':t.sens); $('g-cat').value=t.categorie||''; delete $('g-cat').dataset.auto; $('g-cote').value = lastCote(t) ? lastCote(t).prix : ''; fillMoyens($('g-moyen'),t.sens,t.moyen||''); fillComptes($('g-compte'),t.compteId||''); $('g-lib').value=t.libelle||''; $('g-montant').value= Array.isArray(t.prix)&&t.prix.length>1 ? t.prix.map(fmtNum).join('+') : fmtNum(cents(puOf(t))); $('g-qte').value=qteOf(t); syncG(); $('g-cout').value=typeof t.cpu==='number'?t.cpu:(typeof t.cout==='number'?cents(t.cout/qteOf(t)):''); $('g-plat').value=t.plateforme||''; $('g-date').value=t.date||todayISO(); $('g-cdate').value=t.cdate||''; $('g-lien').value=t.lien||'';
     setEditing('tcg',fG,$('f-tcg-title'),'',t._id); $('g-lib').focus(); }
   fG.querySelector('[data-cancel]').addEventListener('click',resetTcg);
@@ -1404,7 +1438,7 @@ td.zero{color:var(--muted)}
         if(!last || last.prix!==e.prix){ if(last && last.date===e.date) cs[cs.length-1]=e; else cs.push(e); } }
       if(cs.length) d.cotes=cs.slice(-60);
       if(S.scanImg && S.scanImg.length) d.img=S.scanImg; else if(prev && prev.img) d.img=prev.img;
-      if(await save(id,d,fG)) resetTcg();
+      if(await save(id,d,fG)){ if(!id) dcAfterSave(d); resetTcg(); }
       return;
     }
     const terms=parsePrices($('g-montant').value);
@@ -1421,7 +1455,7 @@ td.zero{color:var(--muted)}
     if(S.scanImg && S.scanImg.length) d.img=S.scanImg; else if(prev && prev.img) d.img=prev.img;
     if(prev && prev.achatId) d.achatId=prev.achatId;
     payFields(d,$('g-moyen'),$('g-compte'));
-    if(await save(id,d,fG)){ if(!id) rememberPay(S.sens,$('g-moyen').value,$('g-compte').value); resetTcg(); }
+    if(await save(id,d,fG)){ if(!id){ rememberPay(S.sens,$('g-moyen').value,$('g-compte').value); dcAfterSave(d); } resetTcg(); }
   });
 
   // ---- Stockage
@@ -1714,6 +1748,8 @@ td.zero{color:var(--muted)}
       S.scanCote = (chosen && chosen.price && fresh(chosen)) ? cents(chosen.price) : null;
       S.scanMin = (S.scanCote && chosen.low) ? cents(chosen.low) : null;
       S.scanImg = chosen ? (chosen.thumbs||chosen.imgs||[]).slice(0,2) : null;
+      S.scanSend = { imgs: chosen ? (chosen.imgs||[]).slice() : [], photo: photoSrc, sub: chosen ? chosen.sub||'' : '',
+        price: chosen && chosen.price && fresh(chosen) ? cents(chosen.price) : null, low: chosen && chosen.low && fresh(chosen) ? cents(chosen.low) : null };
       if(S.scanCote && S.sens==='obtenu' && !$('g-cote').value) $('g-cote').value=S.scanCote;
     }
     use.addEventListener('click',()=>{ applyScan();
@@ -1924,6 +1960,132 @@ td.zero{color:var(--muted)}
     try{ const clean=await readBackupFile(f); $('footer-details').open=true; askRestore(clean); }catch(err){ $('footer-details').open=true; showBkMsg(String(err),true); }
   }));
   renderBackup();
+
+  // ---- Discord : message dans un salon pour chaque carte ajoutée avec le scan (adresse du webhook gardée sur cet appareil)
+  const DC_KEY='stock-discord';
+  const DC_RE=/^https:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/api\/(?:v\d+\/)?webhooks\/\d+\/[\w-]+\/?(?:\?[\w=&-]*)?$/;
+  const DC_COLORS={pokemon:0xE3B323, onepiece:0xC8352B, lorcana:0x5B4BA8, riftbound:0x2A7AB8, babaticket:0xD9637E, divers:0x6B7A75, autre:0x6B7A75};
+  function dcGet(){ try{ const o=JSON.parse(localStorage.getItem(DC_KEY)||'null'); if(o && DC_RE.test(o.url||'')) return {url:o.url, auto:o.auto!==false, prix:o.prix!==false}; }catch(e){} return null; }
+  function dcSet(o){ try{ if(o) localStorage.setItem(DC_KEY, JSON.stringify(o)); else localStorage.removeItem(DC_KEY); return true; }catch(e){ return false; } }
+  function dcMsg(t,isErr){ const m=$('dc-msg'); m.textContent=t||''; m.hidden=!t; m.className= isErr?'msg':'hint'; }
+  function renderDc(){
+    const c=dcGet(), st=$('dc-state');
+    st.textContent = c ? (c.auto ? 'relié ✓ · envoi automatique des cartes scannées' : 'relié · envoi automatique coupé') : 'non relié';
+    st.className = c&&c.auto ? 'hint dc-ok' : 'hint';
+    if(document.activeElement!==$('dc-url')) $('dc-url').value = c ? c.url : '';
+    $('dc-auto').checked = c ? c.auto : true; $('dc-prix').checked = c ? c.prix : true;
+    $('dc-del').hidden=!c;
+  }
+  function dcSaveField(){
+    const u=$('dc-url').value.trim();
+    if(!DC_RE.test(u)){ dcMsg('Colle l’adresse complète du webhook : elle commence par https://discord.com/api/webhooks/…', true); return null; }
+    const c={url:u, auto:$('dc-auto').checked, prix:$('dc-prix').checked};
+    if(!dcSet(c)){ dcMsg('Ce navigateur n’a pas pu enregistrer l’adresse (navigation privée ?).', true); return null; }
+    renderDc(); return c;
+  }
+  let toastT=null;
+  function toast(t, isErr, retry){
+    let el=$('toast');
+    if(!el){ el=document.createElement('div'); el.id='toast'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); document.body.append(el); }
+    el.className='toast'+(isErr?' err':''); el.replaceChildren();
+    const s=document.createElement('span'); s.textContent=t; el.append(s);
+    if(retry){ const b=document.createElement('button'); b.type='button'; b.textContent='Réessayer'; b.addEventListener('click',()=>{ el.hidden=true; retry(); }); el.append(b); }
+    const x=document.createElement('button'); x.type='button'; x.textContent='✕'; x.setAttribute('aria-label','Fermer'); x.addEventListener('click',()=>{ el.hidden=true; }); el.append(x);
+    el.hidden=false; clearTimeout(toastT);
+    if(!/…$/.test(t)) toastT=setTimeout(()=>{ el.hidden=true; }, isErr?12000:4000);
+  }
+  // Première image qui se charge vraiment (pour ne pas envoyer une image cassée)
+  function firstLoading(srcs, ms){
+    const list=(srcs||[]).filter(u=>/^https:\/\//.test(u||''));
+    return new Promise(res=>{ let k=0;
+      const next=()=>{ if(k>=list.length) return res(null);
+        const u=list[k++], im=new Image(); let done=false;
+        const end=ok=>{ if(done) return; done=true; clearTimeout(t); ok ? res(u) : next(); };
+        const t=setTimeout(()=>end(false), ms||4000);
+        im.referrerPolicy='no-referrer'; im.onload=()=>end(im.naturalWidth>0); im.onerror=()=>end(false); im.src=u; };
+      next(); });
+  }
+  // Ta photo, réduite (pour Lorcana, Riftbound… ou si l’illustration ne se charge pas)
+  function photoBlob(src){
+    if(!src) return Promise.resolve(null);
+    return new Promise(res=>{ const im=new Image();
+      im.onload=()=>{ try{ const k=Math.min(1, 1000/Math.max(im.naturalWidth,im.naturalHeight,1)); const c=document.createElement('canvas');
+        c.width=Math.max(1,Math.round(im.naturalWidth*k)); c.height=Math.max(1,Math.round(im.naturalHeight*k));
+        c.getContext('2d').drawImage(im,0,0,c.width,c.height); c.toBlob(b=>res(b),'image/jpeg',0.85); }catch(e){ res(null); } };
+      im.onerror=()=>res(null); im.src=src; });
+  }
+  function dcPayload(d, info, showPrix, imgUrl, withPhoto){
+    const kind = d.obtenu ? 'Obtenu' : d.sens==='vente' ? 'Vente' : 'Achat';
+    const icon = d.obtenu ? '🎁' : d.sens==='vente' ? '💸' : '🛒';
+    const q=qteOf(d), fields=[];
+    if(!d.obtenu && showPrix){
+      const total=d.montant||0;
+      const v = Array.isArray(d.prix) && d.prix.length>1 ? `${d.prix.map(eur).join(' + ')} = **${eur(total)}**` : q>1 ? `${eur(puOf(d))} × ${q} = **${eur(total)}**` : `**${eur(total)}**`;
+      fields.push({name: d.sens==='vente' ? 'Prix de vente' : 'Prix payé', value:v, inline:true});
+      if(d.sens==='vente' && typeof d.cout==='number'){ const b=cents(total-d.cout); fields.push({name:'Bénéfice', value:`${b>=0?'+':''}${eur(b)} (payé ${eur(d.cout)})`, inline:true}); }
+    } else if(q>1) fields.push({name:'Quantité', value:String(q), inline:true});
+    if(d.obtenu) fields.push({name:'Provenance', value:'Obtenue (booster, échange…)', inline:true});
+    const lc=lastCote(d), cote = lc ? {prix:lc.prix, min:lc.min} : (info.price ? {prix:info.price, min:info.low} : null);
+    if(cote && cote.prix) fields.push({name:'Cote Cardmarket', value:`${eur(cote.prix)} (tendance)${cote.min?` · dès ${eur(cote.min)}`:''}`, inline:true});
+    if(d.plateforme) fields.push({name: d.sens==='vente' ? 'Vendue sur' : 'Plateforme', value:d.plateforme.slice(0,100), inline:true});
+    if(d.date && d.date!==todayISO()) fields.push({name:'Date', value:new Date(d.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}), inline:true});
+    const desc=[info.sub, d.lien ? `🔗 [Voir sur Cardmarket](${d.lien})${filterLabel(d.lien)?` · ${filterLabel(d.lien)}`:''}` : ''].filter(Boolean).join('\n');
+    const e={ author:{name:`${icon} ${kind} · ${gameName(d.jeu)}`}, title:(d.libelle||'Carte').slice(0,250), color:DC_COLORS[d.jeu]||DC_COLORS.autre,
+      fields, footer:{text:[d.categorie, 'Mon Stock'].filter(Boolean).join(' · ')}, timestamp:new Date().toISOString() };
+    if(d.lien) e.url=d.lien;
+    if(desc) e.description=desc.slice(0,1000);
+    if(imgUrl) e.image={url:imgUrl}; else if(withPhoto) e.image={url:'attachment://photo.jpg'};
+    const p={ username:'Mon Stock', avatar_url:'https://stock.philoudng.fr/icons/icon-192.png', embeds:[e], allowed_mentions:{parse:[]} };
+    if(withPhoto && !imgUrl) p.attachments=[{id:0, filename:'photo.jpg', description:'Photo de la carte'}];
+    return p;
+  }
+  async function dcSend(c, payload, file){
+    const fd=new FormData(); fd.append('payload_json', JSON.stringify(payload)); if(file) fd.append('files[0]', file, 'photo.jpg');
+    const u=new URL(c.url); u.searchParams.set('wait','true');
+    const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(), 20000);
+    let r;
+    try{ r=await fetch(u.href,{method:'POST', body:fd, signal:ctl.signal, credentials:'omit', referrerPolicy:'no-referrer'}); }
+    catch(e){ throw {code: navigator.onLine===false ? 'offline' : 'network'}; }
+    finally{ clearTimeout(t); }
+    if(!r.ok){ throw {code:'http', status:r.status}; }
+    return true;
+  }
+  function dcErrText(e){
+    if(e && e.code==='offline') return 'Pas de connexion : carte non envoyée sur Discord.';
+    if(e && (e.status===401||e.status===403||e.status===404)) return 'Discord refuse l’adresse du webhook (supprimé ou mal copié ?). Vérifie-la en bas de page.';
+    if(e && e.status===429) return 'Discord demande d’attendre un peu avant un nouvel envoi.';
+    if(e && e.status===400) return 'Discord a refusé le message.';
+    return 'Discord n’a pas répondu : carte non envoyée.';
+  }
+  function dcAfterSave(d){
+    const info=S.scanSend, c=dcGet();
+    if(!info || !c || !c.auto) return;
+    dcPost({...d}, info);
+  }
+  async function dcPost(d, info){
+    const c=dcGet(); if(!c) return;
+    toast('Envoi sur Discord…');
+    try{
+      const img=await firstLoading(info.imgs, 4000);
+      const file = img ? null : await photoBlob(info.photo);
+      await dcSend(c, dcPayload(d, info, c.prix, img, !!file), file);
+      toast('Carte envoyée sur Discord ✓');
+    }catch(e){ toast(dcErrText(e), true, ()=>dcPost(d, info)); }
+  }
+  $('dc-save').addEventListener('click',()=>{ if(dcSaveField()) dcMsg('Adresse enregistrée. Touche « Envoyer un test » pour vérifier.'); });
+  ['dc-auto','dc-prix'].forEach(k=>$(k).addEventListener('change',()=>{ const c=dcGet(); if(c){ dcSet({...c, auto:$('dc-auto').checked, prix:$('dc-prix').checked}); renderDc(); } }));
+  $('dc-del').addEventListener('click',()=>{ dcSet(null); $('dc-url').value=''; renderDc(); dcMsg('Discord n’est plus relié sur cet appareil.'); });
+  $('dc-test').addEventListener('click',async()=>{
+    let c=dcGet(); const v=$('dc-url').value.trim();
+    if(!c || (v && v!==c.url)){ c=dcSaveField(); if(!c) return; }
+    const b=$('dc-test'); b.disabled=true; dcMsg('Envoi du test…');
+    try{ await dcSend(c, { username:'Mon Stock', avatar_url:'https://stock.philoudng.fr/icons/icon-192.png', allowed_mentions:{parse:[]},
+        embeds:[{ title:'Mon Stock est relié à ce salon ✓', description:'Les cartes ajoutées avec le scan arriveront ici.', color:0x1F5C4A, footer:{text:'Mon Stock'}, timestamp:new Date().toISOString() }] });
+      dcMsg('Test envoyé ✓ Regarde le salon sur Discord.'); }
+    catch(e){ dcMsg(dcErrText(e).replace('carte non envoyée','test non envoyé').replace(' Vérifie-la en bas de page.',''), true); }
+    finally{ b.disabled=false; }
+  });
+  renderDc();
 
   // ---- Application installable (fonctionne hors connexion)
   if('serviceWorker' in navigator && location.protocol==='https:'){ window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{ try{ r.update(); }catch(e){} }).catch(()=>{}); }); }
