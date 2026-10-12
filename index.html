@@ -617,8 +617,9 @@ td.zero{color:var(--muted)}
       </details>
     </section>
     <details id="footer-details">
-      <summary>Version 54 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 55 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v55</span><span>Illustrations ajoutées automatiquement aux anciennes cartes Pokémon et One Piece, retrouvées grâce au lien Cardmarket ou au numéro de la carte (mêmes images que le scan). Elles apparaissent aussi dans le bot Discord.</span></li>
         <li><span class="v">v54</span><span>Bot Discord : l&#x27;illustration de la carte s&#x27;affiche (image envoyée par le bot, avec plusieurs sources de secours ; image retrouvée aussi pour les cartes enregistrées sans illustration).</span></li>
         <li><span class="v">v53</span><span>Bot Discord : une commande par jeu (/pokemon, /onepiece, /lorcana, /riftbound, /babaticket, /divers) avec un résumé : stock et plus-value, mois, année, meilleures cotes, séries, derniers mouvements.</span></li>
         <li><span class="v">v52</span><span>Bot Discord : /carte par série (liste de tes séries, puis cartes en grand une par une), boutons ◀ ▶, menu « aller à » et tri (numéro, cote, plus-value, prix, date, nom).</span></li>
@@ -1660,6 +1661,65 @@ td.zero{color:var(--muted)}
         if(c && tp){ c.price=tp; c.priceDate=String(x.cardmarket.updatedAt||'').replace(/\//g,'-'); } }); }
     catch(e){} finally{ clearTimeout(t); }
   }
+  // ---- Illustrations des anciennes lignes : retrouvées depuis le lien Cardmarket ou le numéro de la carte
+  // (Cardmarket bloque ses propres images hors de son site : on prend les mêmes illustrations que le scan.)
+  const IMG_TRIED_KEY='monstock-img-tried';
+  let imgFillRunning=false, imgFillAt=0, PK_BY_ID=null, PK_BY_NUM=null;
+  function cmIdOf(u){ try{ const id=new URL(u).searchParams.get('idProduct'); return id && /^\d+$/.test(id) ? +id : null; }catch(e){ return null; } }
+  function cmSlug(u){ try{ return decodeURIComponent(new URL(u).pathname.split('/').filter(Boolean).pop()||''); }catch(e){ return ''; } }
+  async function findOnePieceImgs(t){
+    const lib=String(t.libelle||''), slug=cmSlug(t.lien||''), id=cmIdOf(t.lien||'');
+    const cm = id ? await loadCM().catch(()=>null) : null;
+    const m=(lib+' '+slug).match(/\b((?:OP|ST|EB|PRB)\d{2}|P)-(\d{3})\b/i);
+    let code = m ? `${m[1].toUpperCase()}-${m[2]}` : '';
+    if(!code && id && cm && cm.op) code = Object.keys(cm.op).find(k=>cm.op[k].some(r=>r[0]===id)) || '';
+    if(!code) return null;
+    const cands=await cardLookup('onepiece', code); if(!cands.length) return null;
+    let pick=null;
+    if(id){ const row=cm && cm.op && (cm.op[code]||[]).find(r=>r[0]===id);
+      if(row){ const nrm=x=>fold(x).replace(/[^a-z0-9]+/g,' ').trim(); const same=cands.filter(c=>row[4] && nrm(c.setName||'').includes(nrm(row[4]))); pick=(same.length?same:cands)[Math.max(0,(row[1]||1)-1)]||null; } }
+    if(!pick){ const v=(lib.match(/\(V\.(\d+)\)/i)||slug.match(/-V(\d+)$/i)||[])[1], n=v?+v:1;
+      const base=cands.find(c=>c.key===code)||cands[0];
+      pick = n<=1 ? base : (cands.filter(c=>c.setName===base.setName)[n-1]||null); }
+    return pick ? (pick.thumbs||pick.imgs||[]).slice(0,2) : null;
+  }
+  async function findPokemonImgs(t){
+    const db=await loadDB('pokemon');
+    const toImgs=c=>[c.i, c.p ? `https://images.pokemontcg.io/${c.p.replace(/-([^-]+)$/,'/$1')}.png` : ''].filter(Boolean);
+    const id=cmIdOf(t.lien||'');
+    if(id){ if(!PK_BY_ID){ PK_BY_ID=new Map(); Object.values(db).forEach(l=>l.forEach(c=>{ if(c.m) PK_BY_ID.set(+c.m,c); })); } const c=PK_BY_ID.get(id); if(c && c.i) return toImgs(c); }
+    const lib=String(t.libelle||'');
+    const m=lib.match(/\(([A-Z0-9]{2,6})\s+(\d{1,3})\s*\/\s*(\d{1,3})\)/i);
+    if(m){ const l=db[`${+m[2]}/${+m[3]}`]||[]; const c=l.find(x=>(x.a||'').toUpperCase()===m[1].toUpperCase()) || (l.length===1?l[0]:null); if(c && c.i) return toImgs(c); }
+    // lien du type …/Singles/151/Charizard-ex-V3-MEW199
+    const tok=(cmSlug(t.lien||'').split('-').pop()||'').toUpperCase();
+    if(/^[A-Z][A-Z0-9]*\d$/.test(tok)){
+      if(!PK_BY_NUM){ PK_BY_NUM=new Map(); Object.entries(db).forEach(([k,l])=>{ const n=k.split('/')[0]; if(!PK_BY_NUM.has(n)) PK_BY_NUM.set(n,[]); PK_BY_NUM.get(n).push(...l); }); }
+      for(let k=1;k<=3 && k<tok.length;k++){ const ab=tok.slice(0,-k), num=tok.slice(-k); if(!/^\d+$/.test(num)) break;
+        const c=(PK_BY_NUM.get(String(+num))||[]).find(x=>(x.a||'').toUpperCase()===ab); if(c && c.i) return toImgs(c); }
+    }
+    return null;
+  }
+  async function fillOldImages(){
+    if(imgFillRunning || !S.col || Date.now()-imgFillAt<60000) return;
+    imgFillRunning=true; imgFillAt=Date.now();
+    let tried={}; try{ tried=JSON.parse(localStorage.getItem(IMG_TRIED_KEY)||'{}')||{}; }catch(e){}
+    let added=0;
+    try{
+      for(const [id,d] of Object.entries(S.col.readAll())){
+        const t=norm(d), sig=fold(`${t.libelle||''}|${t.lien||''}`).slice(0,120);
+        if(t.kind!=='tcg' || (t.jeu!=='pokemon' && t.jeu!=='onepiece') || (Array.isArray(t.img)&&t.img.length) || tried[id]===sig) continue;
+        let imgs;
+        try{ imgs = t.jeu==='pokemon' ? await findPokemonImgs(t) : await findOnePieceImgs(t); }catch(e){ continue; }  // réseau : on réessaiera
+        if(imgs && imgs.length){ const cur=S.col.readAll()[id]; if(cur && !(Array.isArray(cur.img)&&cur.img.length)){ await S.col.doc(id).set({...cur, img:imgs}); added++; } }
+        tried[id]=sig;
+      }
+    }finally{
+      try{ localStorage.setItem(IMG_TRIED_KEY, JSON.stringify(tried)); }catch(e){}
+      imgFillRunning=false;
+    }
+    if(added) toast(`Illustrations retrouvées pour ${added} carte${added>1?'s':''} ✓`);
+  }
   function cmSearch(game, q){
     return CM_SLUG[game] ? `https://www.cardmarket.com/fr/${CM_SLUG[game]}/Products/Search?searchString=${encodeURIComponent(q)}`
                          : `https://www.google.com/search?q=${encodeURIComponent('cardmarket '+gameName(game)+' '+q)}`;
@@ -1958,6 +2018,7 @@ td.zero{color:var(--muted)}
     try{ navigator.storage && navigator.storage.persist && navigator.storage.persist(); }catch(e){}
     S.col=localCollection(STORE_KEY);
     S.col.onSnapshot(snap=>{ S.raw=snap.docs.map(d=>({...d.data(),_id:d.id})); render(); renderBackup(); });
+    setTimeout(()=>fillOldImages().catch(()=>{}), 2500);
   })();
 
   // ---- Sauvegarde / restauration
@@ -2222,6 +2283,7 @@ td.zero{color:var(--muted)}
       }
       const s3=syncState(); s3.lastOk=Date.now(); saveSync(s3);
       SY.state='ok'; SY.err='';
+      setTimeout(()=>fillOldImages().catch(()=>{}), 1500);
     }catch(e){
       SY.state='err'; SY.err=syncErrText(e);
       if(e && e.kind==='expired'){ SY.state=''; acMsg(SY.err,true); SY.err=''; }
