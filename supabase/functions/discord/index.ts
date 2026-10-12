@@ -377,12 +377,20 @@ async function setup(key) {
   const cfg = await config(true);
   const page = (msg, ok) => new Response(`${ok ? '✅' : '⚠️'} Mon Stock · ${msg}`, { status: ok ? 200 : 400, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
   if (!cfg.setup_key || key !== cfg.setup_key) return page('Clé de réglage incorrecte.', false);
-  const token = Deno.env.get('DISCORD_BOT_TOKEN');
+  const token = String(Deno.env.get('DISCORD_BOT_TOKEN') || '').trim().replace(/^Bot\s+/i, '').replace(/^["'`]+|["'`]+$/g, '').trim();
   if (!token) return page('Il manque le secret DISCORD_BOT_TOKEN dans Supabase (Edge Functions → Secrets).', false);
   if (!/^\d+$/.test(cfg.discord_app_id || '')) return page('Il manque l’identifiant de l’application Discord (discord_app_id).', false);
   const r = await fetch(`https://discord.com/api/v10/applications/${cfg.discord_app_id}/commands`, { method: 'PUT', headers: { Authorization: 'Bot ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(COMMANDS) });
   const t = await r.text();
-  if (!r.ok) return page(`Discord a refusé l’enregistrement (${r.status}) : ${t.slice(0, 300)}`, false);
+  if (!r.ok) {
+    // Diagnostic sans dévoiler le jeton : forme et application d'origine
+    const parts = token.split('.');
+    let owner = '';
+    try { owner = atob(parts[0].replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((parts[0].length + 3) % 4)); } catch (_) { /* rien */ }
+    const diag = `jeton de ${token.length} caractères en ${parts.length} partie${parts.length > 1 ? 's' : ''}` +
+      (parts.length !== 3 ? ' (un jeton de bot en a 3, séparées par des points)' : owner === cfg.discord_app_id ? ', bien lié à cette application' : /^\d+$/.test(owner) ? ', mais il appartient à une autre application' : '');
+    return page(`Discord a refusé l’enregistrement (${r.status}) : ${t.slice(0, 200)} · ${diag}.`, false);
+  }
   let n = 0; try { n = JSON.parse(t).length; } catch (_) { /* rien */ }
   return page(`${n} commandes enregistrées sur Discord : /tresorerie, /mois, /carte, /objectifs, /reglage.`, true);
 }
