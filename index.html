@@ -617,8 +617,9 @@ td.zero{color:var(--muted)}
       </details>
     </section>
     <details id="footer-details">
-      <summary>Version 49 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 50 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v50</span><span>Compte en ligne activé : le site est relié à ton projet Supabase, il suffit de créer ton compte en bas de page.</span></li>
         <li><span class="v">v49</span><span>Compte en ligne (Supabase) : connexion par e-mail et mot de passe, copie de tes données en ligne et synchronisation automatique entre tes appareils. Tout reste aussi sur l&#x27;appareil, même hors connexion.</span></li>
         <li><span class="v">v48</span><span>Discord : chaque carte ajoutée avec le scan peut être envoyée dans un salon de ton serveur (illustration ou ta photo, prix, cote, lien Cardmarket). Réglage en bas de page.</span></li>
         <li><span class="v">v47</span><span>Lien Cardmarket filtré automatiquement (langue + état minimum Near Mint, modifiables) et « premier prix affiché » ajouté à la cote. Au scan : prix le plus bas Cardmarket en plus de la tendance.</span></li>
@@ -1920,7 +1921,7 @@ td.zero{color:var(--muted)}
   // ---- Stockage local (dans l'appareil), même interface que l'ancienne base
   const STORE_KEY='monstock-data-v1', BACKUP_KEY='monstock-last-backup';
   // Compte en ligne (Supabase). La clé publique peut être visible : chaque compte ne lit que ses propres lignes (règles de sécurité de la table).
-  const SUPA_CFG={ url:'', key:'' };
+  const SUPA_CFG={ url:'https://xeptwyjpeidmfxqvbpay.supabase.co', key:'sb_publishable_s6C-U7imrHbRmoe4McxpTQ_qp-GpBmm' };
   const CFG_KEY='monstock-supa', SES_KEY='monstock-session', SYNC_KEY='monstock-sync', SB_TABLE='stock_entries';
   const lsGet=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } };
   const lsSet=(k,v)=>{ try{ if(v==null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } };
