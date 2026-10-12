@@ -156,7 +156,7 @@ function makeCalc(raw, today) {
     if (src === 'cash') return cashTotal();
     const c = of('compte').find(x => x._id === src); return c ? soldeOf(c) : 0;
   }
-  return { NOWK, all, of, subCost, soldeOf, soldMap, stockItems, stockTotals, cashTotal, monthTotals, monthLines, goalValue };
+  return { NOWK, all, of, subCost, implicitCost, costDate, soldeOf, soldMap, stockItems, stockTotals, cashTotal, monthTotals, monthLines, goalValue };
 }
 
 const EMO_RULES = [
@@ -379,8 +379,9 @@ function seriesOverview(all, tri) {
     components: [{ type: 1, components: [{ type: 3, custom_id: cid('v', 0, tri, '', ''), placeholder: 'Choisir une série…',
       options: pick.map(g => ({ label: clip(g.s.name, 100), value: g.s.key.slice(0, 100), description: clip(`${g.items} article${g.items > 1 ? 's' : ''}${g.val ? ` · ≈ ${eur(g.val)}` : ''}`, 100) })) }] }] };
 }
+const inSerie = (x, s) => !s || (s.endsWith('~*') ? x.s.jeu === s.slice(0, -2) : x.s.key === s);
 function resolveSerie(all, s) {
-  if (!s || all.some(x => x.s.key === s)) return s;
+  if (!s || s.endsWith('~*') || all.some(x => x.s.key === s)) return s;
   const f = fold(s).trim();
   const m = all.find(x => fold(x.s.code) === f) || all.find(x => fold(x.s.label) === f) || all.find(x => fold(x.s.name).includes(f));
   return m ? m.s.key : s;
@@ -391,9 +392,9 @@ async function carteView(C, a) {
   if (!a.serie && !a.q && !a.focusId) return seriesOverview(all, a.tri || 'numero');
   let s = resolveSerie(all, a.serie || ''), q = a.q || '';
   if (a.focusId) { const f = all.find(x => x.t._id === a.focusId); if (f) { s = f.s.key; q = ''; } }
-  const tri = TRIS[a.tri] ? a.tri : (s ? 'numero' : 'recent');
+  const tri = TRIS[a.tri] ? a.tri : (s ? (s.endsWith('~*') ? 'cote' : 'numero') : 'recent');
   const words = fold(q).split(/\s+/).filter(Boolean);
-  const list = sortItems(all.filter(x => (!s || x.s.key === s) && words.every(w => fold(`${x.t.libelle} ${x.t.categorie || ''} ${x.s.name}`).includes(w))), tri);
+  const list = sortItems(all.filter(x => inSerie(x, s) && words.every(w => fold(`${x.t.libelle} ${x.t.categorie || ''} ${x.s.name}`).includes(w))), tri);
   if (!list.length) return { content: `Aucun article ne correspond${q ? ` à « ${clip(q, 60)} »` : ''}${s ? ' dans cette série' : ''}.`, embeds: [], components: [{ type: 1, components: [btnSeries(tri)] }] };
   let idx = Math.max(0, Math.min(list.length - 1, a.page || 0));
   if (a.focusId) { const k = list.findIndex(x => x.t._id === a.focusId); if (k >= 0) idx = k; }
@@ -412,6 +413,59 @@ function cmdObjectifs(C) {
     return `${g.emoji || autoEmoji(g.nom)} **${clip(g.nom || 'Objectif', 60)}**${src}\n${bar} ${pc}\n${eur(have)} / ${eur(g.montant)} · ${pct >= 100 ? 'atteint 🎉' : `reste ${eur(g.montant - have)}`}`;
   });
   return [{ title: '🎯 Objectifs', color: COLOR, description: joinLines(lines.map(l => l + '\n'), 4000), footer: FOOT }];
+}
+
+// ---- /pokemon, /onepiece… : petit résumé d'un jeu
+const GAME_CMDS = { pokemon: ['pokemon', '⚡'], onepiece: ['onepiece', '🏴‍☠️'], lorcana: ['lorcana', '✨'], riftbound: ['riftbound', '🌀'], babaticket: ['babaticket', '🎟️'], divers: ['divers', '📦'] };
+function gameStatsFor(C, jeu, test) {
+  const tcg = C.of('tcg').filter(t => (t.jeu || 'autre') === jeu);
+  const inP = t => test(mkey(t.date));
+  const achats = tcg.filter(t => t.sens === 'achat' && !t.obtenu && inP(t));
+  const ventes = tcg.filter(t => t.sens === 'vente' && inP(t));
+  const hidden = tcg.filter(t => C.implicitCost(t) && test(mkey(C.costDate(t))));
+  const out = achats.reduce((s, t) => s + (t.montant || 0), 0) + hidden.reduce((s, t) => s + C.implicitCost(t), 0);
+  const inn = ventes.reduce((s, t) => s + (t.montant || 0), 0);
+  const known = ventes.filter(t => typeof t.cout === 'number');
+  const obt = tcg.filter(t => t.obtenu && inP(t)).reduce((s, t) => s + qteOf(t), 0);
+  return { out, inn, net: inn - out, marge: known.reduce((s, t) => s + t.montant - t.cout, 0), nA: achats.length, nV: ventes.length, nMiss: ventes.length - known.length, obt };
+}
+function periodField(name, st, withMarge) {
+  if (!st.nA && !st.nV && !st.out && !st.obt) return { name, value: 'Rien', inline: true };
+  const lines = [`🛒 ${eur(st.out)}${st.nA ? ` (${st.nA} achat${st.nA > 1 ? 's' : ''})` : st.out ? ' (achats des ventes)' : ''}`, `💸 ${eur(st.inn)}${st.nV ? ` (${st.nV} vente${st.nV > 1 ? 's' : ''})` : ''}`, `**Net ${sgn(st.net)}**`];
+  if (withMarge && st.nV) lines.push(`Bénéfice ${sgn(st.marge)}`);
+  if (st.obt) lines.push(`🎁 ${st.obt} obtenu${st.obt > 1 ? 's' : ''}`);
+  return { name, value: lines.join('\n'), inline: true };
+}
+function cmdJeu(C, SER, jeu) {
+  const [, emoji] = GAME_CMDS[jeu] || ['', '🃏'];
+  const all = collection(C, SER).filter(x => (x.t.jeu || 'autre') === jeu);
+  if (!all.length) return { content: `Rien dans ${gameName(jeu)} pour l’instant.`, embeds: [], components: [] };
+  const K = C.NOWK, Y = Math.floor(K / 12);
+  const stock = all.filter(x => x.rem > 0);
+  const val = stock.reduce((s, x) => s + (x.cote ?? puOf(x.t)) * x.rem, 0), cost = stock.reduce((s, x) => s + puOf(x.t) * x.rem, 0);
+  const n = stock.reduce((s, x) => s + x.rem, 0), nCoted = stock.filter(x => x.cote !== null).length;
+  const sY = gameStatsFor(C, jeu, k => k !== null && Math.floor(k / 12) === Y), sAll = gameStatsFor(C, jeu, () => true);
+  const fields = [periodField(`📅 ${MOIS[K % 12]}`, gameStatsFor(C, jeu, k => k === K)), periodField(`📆 ${Y}`, sY, true)];
+  if (cents(sAll.out) !== cents(sY.out) || cents(sAll.inn) !== cents(sY.inn) || sAll.obt !== sY.obt) fields.push(periodField('♾️ Depuis le début', sAll, true));
+  const top = stock.filter(x => x.cote !== null).sort((a, b) => b.cote - a.cote).slice(0, 5);
+  if (top.length) fields.push({ name: '🏆 Plus grosses cotes', value: joinLines(top.map((x, i) => `${['🥇', '🥈', '🥉', '4.', '5.'][i]} ${clip(x.t.libelle, 55)} — **${eur(x.cote)}**${x.rem > 1 ? ` ×${x.rem}` : ''}`), 1024) });
+  const groups = seriesGroups(all);
+  if (groups.length) fields.push({ name: `🗂️ Séries (${groups.length})`, value: joinLines(groups.slice(0, 6).map(g => `**${g.s.code || g.s.label}**${g.s.code && g.s.label && g.s.label !== g.s.code ? ` — ${clip(g.s.label, 32)}` : ''} · ${g.items} art.${g.val ? ` · ≈ ${eur(g.val)}` : ''}`), 1024) + (groups.length > 6 ? `\n… et ${groups.length - 6} autre${groups.length - 6 > 1 ? 's' : ''}` : '') });
+  const recent = C.of('tcg').filter(t => (t.jeu || 'autre') === jeu && t.libelle).sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || (b.createdAt || 0) - (a.createdAt || 0)).slice(0, 5);
+  if (recent.length) fields.push({ name: '🕑 Derniers mouvements', value: joinLines(recent.map(t => `${t.obtenu ? '🎁' : t.sens === 'vente' ? '💸' : '🛒'} ${clip(t.libelle, 48)} · ${t.obtenu ? 'obtenu' : (t.sens === 'vente' ? '+' : '−') + eur(t.montant)} · ${fdate(t.date)}`), 1024) });
+  const e = { title: `${emoji} ${gameName(jeu)}`, color: GCOLOR[jeu] || COLOR,
+    description: stock.length ? `**${eur(val)}** de stock · ${n} article${n > 1 ? 's' : ''}\npayé ${eur(cost)} · plus-value **${sgn(val - cost)}**${nCoted < stock.length ? `\n${stock.length - nCoted} ligne${stock.length - nCoted > 1 ? 's' : ''} sans cote (comptée${stock.length - nCoted > 1 ? 's' : ''} au prix payé)` : ''}` : 'Plus rien en stock.',
+    fields, footer: FOOT, timestamp: new Date().toISOString() };
+  const img = top.length ? bigImg(top[0].t) : '';
+  if (img) e.thumbnail = { url: img };
+  const comps = [{ type: 1, components: [
+    { type: 2, style: 1, emoji: { name: '🃏' }, label: 'Voir les cartes', custom_id: cid('g', 0, 'cote', `${jeu}~*`, '') },
+    btnSeries('numero'),
+  ] }];
+  const pick = groups.slice().sort((a, b) => b.val - a.val).slice(0, 25);
+  if (pick.length > 1) comps.push({ type: 1, components: [{ type: 3, custom_id: cid('v', 0, 'numero', '', ''), placeholder: `Séries ${gameName(jeu)}…`,
+    options: pick.map(g => ({ label: clip(g.s.name, 100), value: g.s.key.slice(0, 100), description: clip(`${g.items} article${g.items > 1 ? 's' : ''}${g.val ? ` · ≈ ${eur(g.val)}` : ''}`, 100) })) }] });
+  return { content: '', embeds: [e], components: comps };
 }
 
 // ---- Commandes
@@ -450,7 +504,7 @@ async function command(it) {
     if (!/^\d+$/.test(role)) return reply('Choisis un rôle.', true);
     await setConfig('role:' + g, role);
     await setConfig('salon:' + g, /^\d+$/.test(salon) ? salon : '');
-    return reply(`Réglage enregistré ✓\nLes membres qui ont le rôle <@&${role}> peuvent utiliser /tresorerie, /mois, /carte et /objectifs.\n` +
+    return reply(`Réglage enregistré ✓\nLes membres qui ont le rôle <@&${role}> peuvent utiliser /tresorerie, /mois, /carte, /objectifs et les résumés par jeu (/pokemon, /onepiece…).\n` +
       (salon ? `Dans <#${salon}>, les réponses sont visibles par tout le salon ; ailleurs, seulement par la personne qui tape la commande.` : 'Les réponses s’affichent dans le salon où la commande est tapée. Astuce : crée un salon visible seulement par ce rôle, puis refais /reglage avec ce salon.'), true);
   }
   const acc = access(it, cfg);
@@ -462,6 +516,7 @@ async function command(it) {
   if (name === 'tresorerie') return reply('', eph, cmdTresorerie(C));
   if (name === 'mois') return reply('', eph, cmdMois(C, it));
   if (name === 'objectifs') return reply('', eph, cmdObjectifs(C));
+  if (GAME_CMDS[name]) { const v = cmdJeu(C, await seriesNames(), name); return reply(v.content, eph, v.embeds, v.components); }
   if (name === 'carte') {
     const nom = String(opt(it, 'nom') || '').trim();
     const isId = !!nom && C.of('tcg').some(t => t._id === nom);
@@ -506,7 +561,7 @@ async function autocomplete(it) {
     }
     const serie = resolveSerie(all, String(opt(it, 'serie') || '').trim());
     const words = q.split(/\s+/).filter(Boolean);
-    const list = sortItems(all.filter(x => (!serie || x.s.key === serie) && words.every(w => fold(`${x.t.libelle} ${x.t.categorie || ''}`).includes(w))), serie ? 'numero' : 'recent');
+    const list = sortItems(all.filter(x => inSerie(x, serie) && words.every(w => fold(`${x.t.libelle} ${x.t.categorie || ''}`).includes(w))), serie && !serie.endsWith('~*') ? 'numero' : 'recent');
     return list.slice(0, 25).map(x => ({ name: clip(`${x.t.libelle}${serie ? '' : ` · ${x.s.code || gameName(x.t.jeu)}`}${x.t.sens === 'vente' ? ' (vendu)' : x.t.obtenu ? ' (obtenu)' : ''}`, 100), value: String(x.t._id).slice(0, 100) }));
   } catch (_) { return []; }
 }
@@ -525,6 +580,7 @@ const COMMANDS = [
     { type: 3, name: 'tri', description: 'Ordre des cartes', required: false, choices: Object.entries(TRIS).map(([k, v]) => ({ name: v[0].toUpperCase() + v.slice(1), value: k })) },
   ] },
   { name: 'objectifs', description: 'Avancement de tes objectifs financiers' },
+  ...Object.keys(GAME_CMDS).map(j => ({ name: GAME_CMDS[j][0], description: `Résumé ${gameName(j)} : stock, achats, ventes, meilleures cotes, séries` })),
   { name: 'reglage', description: 'Choisir le rôle qui peut utiliser les commandes (administrateurs)', default_member_permissions: '32', options: [
     { type: 8, name: 'role', description: 'Rôle autorisé à utiliser les commandes', required: true },
     { type: 7, name: 'salon', description: 'Salon où les réponses sont visibles par tous (facultatif)', required: false, channel_types: [0] },
@@ -550,7 +606,7 @@ async function setup(key) {
     return page(`Discord a refusé l’enregistrement (${r.status}) : ${t.slice(0, 200)} · ${diag}.`, false);
   }
   let n = 0; try { n = JSON.parse(t).length; } catch (_) { /* rien */ }
-  return page(`${n} commandes enregistrées sur Discord : /tresorerie, /mois, /carte, /objectifs, /reglage.`, true);
+  return page(`${n} commandes enregistrées sur Discord : ${COMMANDS.map(c => '/' + c.name).join(', ')}.`, true);
 }
 
 const json = o => new Response(JSON.stringify(o), { headers: { 'Content-Type': 'application/json' } });
