@@ -1,5 +1,5 @@
 // Mon Stock — fonctionnement hors connexion. Changer VERSION à chaque mise à jour.
-const VERSION = 'v51';
+const VERSION = 'v52';
 const CACHE = 'monstock-' + VERSION;
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
