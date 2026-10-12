@@ -309,8 +309,12 @@ async function command(it) {
   const cfg = await config();
   const name = it.data && it.data.name, g = it.guild_id;
   if (!g) return reply('Ces commandes s’utilisent dans ton serveur Discord.', true);
+  // Un seul serveur autorisé : celui où /reglage a été fait la première fois (ou la liste « guilds » de bot_config)
+  const guilds = String(cfg.guilds || '').split(',').filter(Boolean);
+  if (guilds.length && !guilds.includes(g)) return reply('Ce bot est réservé à un autre serveur.', true);
   if (name === 'reglage') {
     if (!isAdmin(it)) return reply('Seuls les administrateurs du serveur peuvent changer ce réglage.', true);
+    if (!guilds.length) await setConfig('guilds', g);
     const role = String(opt(it, 'role') || ''), salon = String(opt(it, 'salon') || '');
     if (!/^\d+$/.test(role)) return reply('Choisis un rôle.', true);
     await setConfig('role:' + g, role);
@@ -318,6 +322,7 @@ async function command(it) {
     return reply(`Réglage enregistré ✓\nLes membres qui ont le rôle <@&${role}> peuvent utiliser /tresorerie, /mois, /carte et /objectifs.\n` +
       (salon ? `Dans <#${salon}>, les réponses sont visibles par tout le salon ; ailleurs, seulement par la personne qui tape la commande.` : 'Les réponses s’affichent dans le salon où la commande est tapée. Astuce : crée un salon visible seulement par ce rôle, puis refais /reglage avec ce salon.'), true);
   }
+  if (!guilds.length) return reply('Pas encore de serveur choisi : un administrateur doit d’abord faire /reglage.', true);
   const roleId = cfg['role:' + g];
   const roles = (it.member && it.member.roles) || [];
   if (!(isAdmin(it) || (roleId && roles.includes(roleId)))) {
@@ -340,7 +345,8 @@ async function autocomplete(it) {
   try {
     const cfg = await config();
     const g = it.guild_id, roleId = cfg['role:' + g], roles = (it.member && it.member.roles) || [];
-    if (!g || !(isAdmin(it) || (roleId && roles.includes(roleId))) || !cfg.owner_user_id) return [];
+    const guilds = String(cfg.guilds || '').split(',').filter(Boolean);
+    if (!g || !guilds.includes(g) || !(isAdmin(it) || (roleId && roles.includes(roleId))) || !cfg.owner_user_id) return [];
     const focused = (it.data.options || []).find(o => o.focused);
     const q = String(focused && focused.value || '').trim();
     const C = makeCalc(await loadData(cfg.owner_user_id), parisToday());
