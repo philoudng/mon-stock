@@ -617,8 +617,9 @@ td.zero{color:var(--muted)}
       </details>
     </section>
     <details id="footer-details">
-      <summary>Version 55 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 56 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v56</span><span>Illustrations des anciennes cartes One Piece : la bonne version est choisie d&#x27;après l&#x27;extension du lien Cardmarket (ex. Luffytaro ST18-005 de « A Fist of Divine Speed »). Si elle n&#x27;est pas sûre, pas d&#x27;image plutôt qu&#x27;une mauvaise ; les images déjà ajoutées sont vérifiées.</span></li>
         <li><span class="v">v55</span><span>Illustrations ajoutées automatiquement aux anciennes cartes Pokémon et One Piece, retrouvées grâce au lien Cardmarket ou au numéro de la carte (mêmes images que le scan). Elles apparaissent aussi dans le bot Discord.</span></li>
         <li><span class="v">v54</span><span>Bot Discord : l&#x27;illustration de la carte s&#x27;affiche (image envoyée par le bot, avec plusieurs sources de secours ; image retrouvée aussi pour les cartes enregistrées sans illustration).</span></li>
         <li><span class="v">v53</span><span>Bot Discord : une commande par jeu (/pokemon, /onepiece, /lorcana, /riftbound, /babaticket, /divers) avec un résumé : stock et plus-value, mois, année, meilleures cotes, séries, derniers mouvements.</span></li>
@@ -1477,7 +1478,7 @@ td.zero{color:var(--muted)}
       if($('g-cote').value!==''){ const e={date:todayISO(), prix:cents(num($('g-cote').value)), ...(S.scanMin && S.scanCote===cents(num($('g-cote').value)) ? {min:S.scanMin, minAll:true} : {})}; const last=cs[cs.length-1];
         if(!last || last.prix!==e.prix){ if(last && last.date===e.date) cs[cs.length-1]=e; else cs.push(e); } }
       if(cs.length) d.cotes=cs.slice(-60);
-      if(S.scanImg && S.scanImg.length) d.img=S.scanImg; else if(prev && prev.img) d.img=prev.img;
+      if(S.scanImg && S.scanImg.length) d.img=S.scanImg; else if(prev && prev.img){ d.img=prev.img; if(prev.imgAuto) d.imgAuto=1; }
       if(await save(id,d,fG)){ if(!id) dcAfterSave(d); resetTcg(); }
       return;
     }
@@ -1492,7 +1493,7 @@ td.zero{color:var(--muted)}
     if(lien){ if(!cmOk(lien)){ showMsg(fG,'Le lien doit être une adresse https://…cardmarket.com/… copiée depuis la fiche de la carte.'); return; } d.lien=cmFilters(lien, $('g-lang').value, $('g-cond').value); }
     if(prev && Array.isArray(prev.cotes)) d.cotes=prev.cotes;
     if(!d.cotes && S.scanCote && S.sens==='achat') d.cotes=[{date:todayISO(), prix:S.scanCote, ...(S.scanMin?{min:S.scanMin, minAll:true}:{})}];
-    if(S.scanImg && S.scanImg.length) d.img=S.scanImg; else if(prev && prev.img) d.img=prev.img;
+    if(S.scanImg && S.scanImg.length) d.img=S.scanImg; else if(prev && prev.img){ d.img=prev.img; if(prev.imgAuto) d.imgAuto=1; }
     if(prev && prev.achatId) d.achatId=prev.achatId;
     payFields(d,$('g-moyen'),$('g-compte'));
     if(await save(id,d,fG)){ if(!id){ rememberPay(S.sens,$('g-moyen').value,$('g-compte').value); dcAfterSave(d); } resetTcg(); }
@@ -1663,25 +1664,33 @@ td.zero{color:var(--muted)}
   }
   // ---- Illustrations des anciennes lignes : retrouvées depuis le lien Cardmarket ou le numéro de la carte
   // (Cardmarket bloque ses propres images hors de son site : on prend les mêmes illustrations que le scan.)
-  const IMG_TRIED_KEY='monstock-img-tried';
+  const IMG_TRIED_KEY='monstock-img-tried2';
   let imgFillRunning=false, imgFillAt=0, PK_BY_ID=null, PK_BY_NUM=null;
   function cmIdOf(u){ try{ const id=new URL(u).searchParams.get('idProduct'); return id && /^\d+$/.test(id) ? +id : null; }catch(e){ return null; } }
   function cmSlug(u){ try{ return decodeURIComponent(new URL(u).pathname.split('/').filter(Boolean).pop()||''); }catch(e){ return ''; } }
+  // Extension Cardmarket ↔ extension de la version officielle (ex. « A Fist of Divine Speed » ↔ « OP-11 A FIST OF DIVINE SPEED », « OP17 » ↔ « OP-17 … »)
+  const nrmExp = x => fold(x).replace(/[^a-z0-9]+/g,'').replace(/^starterdeck(?:ex)?/,'');
+  function sameExp(c, exp){ const a=nrmExp(c.setName||''), b=nrmExp(exp||''); return b.length>=3 && (a.includes(b) || (a.length>=6 && b.includes(a))); }
+  function cmExpSlug(u){ try{ const parts=new URL(u).pathname.split('/').filter(Boolean); const i=parts.indexOf('Singles'); return i>=0 && parts[i+2] ? decodeURIComponent(parts[i+1]) : ''; }catch(e){ return ''; } }
   async function findOnePieceImgs(t){
-    const lib=String(t.libelle||''), slug=cmSlug(t.lien||''), id=cmIdOf(t.lien||'');
+    const lib=String(t.libelle||''), lien=t.lien||'', slug=cmSlug(lien), id=cmIdOf(lien);
     const cm = id ? await loadCM().catch(()=>null) : null;
     const m=(lib+' '+slug).match(/\b((?:OP|ST|EB|PRB)\d{2}|P)-(\d{3})\b/i);
     let code = m ? `${m[1].toUpperCase()}-${m[2]}` : '';
     if(!code && id && cm && cm.op) code = Object.keys(cm.op).find(k=>cm.op[k].some(r=>r[0]===id)) || '';
     if(!code) return null;
     const cands=await cardLookup('onepiece', code); if(!cands.length) return null;
-    let pick=null;
-    if(id){ const row=cm && cm.op && (cm.op[code]||[]).find(r=>r[0]===id);
-      if(row){ const nrm=x=>fold(x).replace(/[^a-z0-9]+/g,' ').trim(); const same=cands.filter(c=>row[4] && nrm(c.setName||'').includes(nrm(row[4]))); pick=(same.length?same:cands)[Math.max(0,(row[1]||1)-1)]||null; } }
-    if(!pick){ const v=(lib.match(/\(V\.(\d+)\)/i)||slug.match(/-V(\d+)$/i)||[])[1], n=v?+v:1;
-      const base=cands.find(c=>c.key===code)||cands[0];
-      pick = n<=1 ? base : (cands.filter(c=>c.setName===base.setName)[n-1]||null); }
-    return pick ? (pick.thumbs||pick.imgs||[]).slice(0,2) : null;
+    const imgsOf = c => c ? (c.thumbs||c.imgs||[]).slice(0,2) : null;
+    const vTxt=(lib.match(/\(V\.(\d+)\)/i)||slug.match(/-V(\d+)$/i)||[])[1];
+    // Lien avec numéro produit : extension + version exactes, sinon rien (mieux vaut pas d'image qu'une mauvaise)
+    if(id){ const row=cm && cm.op && (cm.op[code]||[]).find(r=>r[0]===id); if(!row) return null;
+      return imgsOf(cands.filter(c=>sameExp(c,row[4]))[(row[1]||1)-1]); }
+    // Lien « …/Singles/<extension>/<carte>-V2 » : même principe avec l'extension de l'adresse
+    const exp=cmExpSlug(lien);
+    if(exp) return imgsOf(cands.filter(c=>sameExp(c, exp.replace(/-/g,' ')))[(vTxt?+vTxt:1)-1]);
+    // Pas de lien : version indiquée dans le nom
+    const n=vTxt?+vTxt:1, base=cands.find(c=>c.key===code)||cands[0];
+    return imgsOf(n<=1 ? base : cands.filter(c=>c.setName===base.setName)[n-1]);
   }
   async function findPokemonImgs(t){
     const db=await loadDB('pokemon');
@@ -1703,22 +1712,33 @@ td.zero{color:var(--muted)}
   async function fillOldImages(){
     if(imgFillRunning || !S.col || Date.now()-imgFillAt<60000) return;
     imgFillRunning=true; imgFillAt=Date.now();
-    let tried={}; try{ tried=JSON.parse(localStorage.getItem(IMG_TRIED_KEY)||'{}')||{}; }catch(e){}
-    let added=0;
+    const OLD_TRIED='monstock-img-tried';
+    let tried={}, old={};
+    try{ tried=JSON.parse(localStorage.getItem(IMG_TRIED_KEY)||'{}')||{}; }catch(e){}
+    try{ old=JSON.parse(localStorage.getItem(OLD_TRIED)||'{}')||{}; }catch(e){}
+    let added=0, fixed=0;
     try{
       for(const [id,d] of Object.entries(S.col.readAll())){
         const t=norm(d), sig=fold(`${t.libelle||''}|${t.lien||''}`).slice(0,120);
-        if(t.kind!=='tcg' || (t.jeu!=='pokemon' && t.jeu!=='onepiece') || (Array.isArray(t.img)&&t.img.length) || tried[id]===sig) continue;
+        if(t.kind!=='tcg' || (t.jeu!=='pokemon' && t.jeu!=='onepiece') || tried[id]===sig) continue;
+        const has=Array.isArray(t.img)&&t.img.length;
+        const redo = has && (t.imgAuto || (t.jeu==='onepiece' && old[id]));  // image posée automatiquement : on la vérifie
+        if(has && !redo) continue;                                          // image du scan : on n'y touche pas
         let imgs;
         try{ imgs = t.jeu==='pokemon' ? await findPokemonImgs(t) : await findOnePieceImgs(t); }catch(e){ continue; }  // réseau : on réessaiera
-        if(imgs && imgs.length){ const cur=S.col.readAll()[id]; if(cur && !(Array.isArray(cur.img)&&cur.img.length)){ await S.col.doc(id).set({...cur, img:imgs}); added++; } }
+        const cur=S.col.readAll()[id];
+        if(cur){
+          const curHas=Array.isArray(cur.img)&&cur.img.length;
+          if(imgs && imgs.length){ if(!curHas || (redo && JSON.stringify(cur.img)!==JSON.stringify(imgs))){ await S.col.doc(id).set({...cur, img:imgs, imgAuto:1}); curHas?fixed++:added++; } else if(redo && !cur.imgAuto){ await S.col.doc(id).set({...cur, imgAuto:1}); } }
+          else if(redo && curHas){ const {img, imgAuto, ...rest}=cur; await S.col.doc(id).set(rest); fixed++; }
+        }
         tried[id]=sig;
       }
     }finally{
-      try{ localStorage.setItem(IMG_TRIED_KEY, JSON.stringify(tried)); }catch(e){}
+      try{ localStorage.setItem(IMG_TRIED_KEY, JSON.stringify(tried)); localStorage.removeItem(OLD_TRIED); }catch(e){}
       imgFillRunning=false;
     }
-    if(added) toast(`Illustrations retrouvées pour ${added} carte${added>1?'s':''} ✓`);
+    if(added||fixed) toast([added?`Illustrations retrouvées pour ${added} carte${added>1?'s':''}`:'', fixed?`${fixed} corrigée${fixed>1?'s':''}`:''].filter(Boolean).join(' · ')+' ✓');
   }
   function cmSearch(game, q){
     return CM_SLUG[game] ? `https://www.cardmarket.com/fr/${CM_SLUG[game]}/Products/Search?searchString=${encodeURIComponent(q)}`

@@ -325,11 +325,8 @@ function imgCands(t, SER) {
   const big = bigImg(t); if (big) add(big);
   (Array.isArray(t.img) ? t.img : []).forEach(add);
   const lib = String(t.libelle || '');
-  if (t.jeu === 'onepiece') {
-    const m = lib.match(/\b((?:OP|ST|EB|PRB)\d{2}|P)-(\d{3})\b/i), v = lib.match(/\(V\.(\d+)\)/i);
-    if (m && (!v || v[1] === '1')) { const id = `${m[1].toUpperCase()}-${m[2]}`;
-      add(`https://en.onepiece-cardgame.com/images/cardlist/card/${id}.png`); add(`https://fr.onepiece-cardgame.com/images/cardlist/card/${id}.webp`); add(`https://optcgapi.com/media/static/Card_Images/${id}.jpg`); }
-  }
+  // One Piece : pas d'image devinée depuis le seul numéro (une carte a souvent plusieurs illustrations) ;
+  // le site retrouve la bonne version grâce à l'extension du lien Cardmarket et l'enregistre dans « img ».
   if (t.jeu === 'pokemon') {
     const g = lib.match(/\(([A-Z0-9]{2,6})\s+(\d{1,3})\s*\/\s*\d{1,3}\)/i), info = g && (SER.pkImg || {})[g[1].toUpperCase()];
     if (info) { const [path, z] = info.split(':'), n = String(parseInt(g[2], 10)); add(`https://assets.tcgdex.net/fr/${path}/${z === '3' ? n.padStart(3, '0') : n}/high.png`); }
