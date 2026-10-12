@@ -318,6 +318,69 @@ function bigImg(t) {
   if (/images\.pokemontcg\.io/.test(u) && !/_hires/.test(u)) return u.replace(/\.png(\?.*)?$/, '_hires.png');
   return u;
 }
+// Illustrations : plusieurs adresses possibles, la fonction télécharge la première qui répond et l'envoie
+// en pièce jointe (Discord n'arrive pas à afficher certaines images directement, ex. site officiel One Piece).
+function imgCands(t, SER) {
+  const out = [], add = u => { if (u && /^https:\/\//.test(u) && !out.includes(u)) out.push(u); };
+  const big = bigImg(t); if (big) add(big);
+  (Array.isArray(t.img) ? t.img : []).forEach(add);
+  const lib = String(t.libelle || '');
+  if (t.jeu === 'onepiece') {
+    const m = lib.match(/\b((?:OP|ST|EB|PRB)\d{2}|P)-(\d{3})\b/i), v = lib.match(/\(V\.(\d+)\)/i);
+    if (m && (!v || v[1] === '1')) { const id = `${m[1].toUpperCase()}-${m[2]}`;
+      add(`https://en.onepiece-cardgame.com/images/cardlist/card/${id}.png`); add(`https://fr.onepiece-cardgame.com/images/cardlist/card/${id}.webp`); add(`https://optcgapi.com/media/static/Card_Images/${id}.jpg`); }
+  }
+  if (t.jeu === 'pokemon') {
+    const g = lib.match(/\(([A-Z0-9]{2,6})\s+(\d{1,3})\s*\/\s*\d{1,3}\)/i), info = g && (SER.pkImg || {})[g[1].toUpperCase()];
+    if (info) { const [path, z] = info.split(':'), n = String(parseInt(g[2], 10)); add(`https://assets.tcgdex.net/fr/${path}/${z === '3' ? n.padStart(3, '0') : n}/high.png`); }
+  }
+  return out;
+}
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
+async function grabImage(cands) {
+  for (const u of cands.slice(0, 5)) {
+    try {
+      const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 4000);
+      const r = await fetch(u, { headers: { 'User-Agent': UA, Accept: 'image/avif,image/webp,image/png,image/*;q=0.8' }, signal: ctl.signal });
+      clearTimeout(tm);
+      const ct = (r.headers.get('content-type') || '').split(';')[0].trim();
+      if (!r.ok || !/^image\/(png|jpeg|webp|gif)$/.test(ct)) continue;
+      const buf = await r.arrayBuffer();
+      if (buf.byteLength < 1500 || buf.byteLength > 8e6) continue;
+      return { buf, ct, name: 'carte.' + ({ 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' }[ct] || 'png') };
+    } catch (_) { /* adresse suivante */ }
+  }
+  return null;
+}
+const withImg = (embeds, img, url) => embeds.map((e, i) => i === img.i ? { ...e, [img.slot]: { url } } : e);
+async function editOriginal(appId, token, data, file) {
+  const url = `https://discord.com/api/v10/webhooks/${appId}/${token}/messages/@original`;
+  if (file) {
+    try {
+      const fd = new FormData();
+      fd.append('payload_json', JSON.stringify({ ...data, attachments: [{ id: 0, filename: file.name }] }));
+      fd.append('files[0]', new Blob([file.buf], { type: file.ct }), file.name);
+      const r = await fetch(url, { method: 'PATCH', body: fd });
+      if (r.ok) return;
+    } catch (_) { /* repli sans pièce jointe */ }
+  }
+  await fetch(url, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...data, attachments: [] }) });
+}
+// Réponse : directe s'il n'y a pas d'image ; sinon « en cours » puis message complété avec l'image jointe
+function respond(it, eph, view, isComponent) {
+  const base = { content: view.content || '', embeds: view.embeds || [], components: view.components || [], allowed_mentions: { parse: [] } };
+  const img = view.img && view.img.cands.length ? view.img : null;
+  const canDefer = img && typeof EdgeRuntime !== 'undefined' && EdgeRuntime.waitUntil && it.token && it.application_id;
+  if (!canDefer) {
+    if (img) base.embeds = withImg(base.embeds, img, img.cands[0]);
+    return isComponent ? { type: 7, data: { ...base, attachments: [] } } : { type: 4, data: { ...base, flags: eph ? 64 : 0 } };
+  }
+  EdgeRuntime.waitUntil((async () => {
+    const file = await grabImage(img.cands);
+    await editOriginal(it.application_id, it.token, { ...base, embeds: withImg(base.embeds, img, file ? `attachment://${file.name}` : img.cands[0]) }, file);
+  })().catch(() => { /* rien */ }));
+  return isComponent ? { type: 6 } : { type: 5, data: { flags: eph ? 64 : 0 } };
+}
 const cardShort = x => [x.rem ? `${x.rem} en stock` : x.t.sens === 'vente' ? `vendu ${eur(x.t.montant)}` : 'tout vendu', x.cote ? `cote ${eur(x.cote)}` : ''].filter(Boolean).join(' · ');
 function cardEmbed(x, idx, total, tri) {
   const t = x.t, lc = x.lc, q = x.q, rem = x.rem, fields = [];
@@ -333,7 +396,6 @@ function cardEmbed(x, idx, total, tri) {
   const e = { author: { name: clip(x.s.name, 250) }, title: clip(t.libelle, 250), color: GCOLOR[t.jeu] || COLOR, fields,
     footer: { text: `${total > 1 ? `Carte ${idx + 1} / ${total} · tri : ${TRIS[tri] || tri} · ` : ''}Mon Stock` } };
   if (url) { e.url = url; e.description = `🔗 [Voir sur Cardmarket](${url})`; }
-  const img = bigImg(t); if (img) e.image = { url: img };
   return e;
 }
 const cid = (op, page, tri, serie, q) => [op, page, tri || '', String(serie || '').replace(/\|/g, '/'), clip(String(q || '').replace(/\|/g, ' '), 40)].join('|').slice(0, 100);
@@ -398,7 +460,7 @@ async function carteView(C, a) {
   if (!list.length) return { content: `Aucun article ne correspond${q ? ` à « ${clip(q, 60)} »` : ''}${s ? ' dans cette série' : ''}.`, embeds: [], components: [{ type: 1, components: [btnSeries(tri)] }] };
   let idx = Math.max(0, Math.min(list.length - 1, a.page || 0));
   if (a.focusId) { const k = list.findIndex(x => x.t._id === a.focusId); if (k >= 0) idx = k; }
-  return { content: '', embeds: [cardEmbed(list[idx], idx, list.length, tri)], components: cardComponents(list, idx, tri, s, q) };
+  return { content: '', embeds: [cardEmbed(list[idx], idx, list.length, tri)], components: cardComponents(list, idx, tri, s, q), img: { cands: imgCands(list[idx].t, SER), i: 0, slot: 'image' } };
 }
 
 function cmdObjectifs(C) {
@@ -456,8 +518,7 @@ function cmdJeu(C, SER, jeu) {
   const e = { title: `${emoji} ${gameName(jeu)}`, color: GCOLOR[jeu] || COLOR,
     description: stock.length ? `**${eur(val)}** de stock · ${n} article${n > 1 ? 's' : ''}\npayé ${eur(cost)} · plus-value **${sgn(val - cost)}**${nCoted < stock.length ? `\n${stock.length - nCoted} ligne${stock.length - nCoted > 1 ? 's' : ''} sans cote (comptée${stock.length - nCoted > 1 ? 's' : ''} au prix payé)` : ''}` : 'Plus rien en stock.',
     fields, footer: FOOT, timestamp: new Date().toISOString() };
-  const img = top.length ? bigImg(top[0].t) : '';
-  if (img) e.thumbnail = { url: img };
+  const img = top.length ? { cands: imgCands(top[0].t, SER), i: 0, slot: 'thumbnail' } : null;
   const comps = [{ type: 1, components: [
     { type: 2, style: 1, emoji: { name: '🃏' }, label: 'Voir les cartes', custom_id: cid('g', 0, 'cote', `${jeu}~*`, '') },
     btnSeries('numero'),
@@ -465,7 +526,7 @@ function cmdJeu(C, SER, jeu) {
   const pick = groups.slice().sort((a, b) => b.val - a.val).slice(0, 25);
   if (pick.length > 1) comps.push({ type: 1, components: [{ type: 3, custom_id: cid('v', 0, 'numero', '', ''), placeholder: `Séries ${gameName(jeu)}…`,
     options: pick.map(g => ({ label: clip(g.s.name, 100), value: g.s.key.slice(0, 100), description: clip(`${g.items} article${g.items > 1 ? 's' : ''}${g.val ? ` · ≈ ${eur(g.val)}` : ''}`, 100) })) }] });
-  return { content: '', embeds: [e], components: comps };
+  return { content: '', embeds: [e], components: comps, img };
 }
 
 // ---- Commandes
@@ -516,12 +577,12 @@ async function command(it) {
   if (name === 'tresorerie') return reply('', eph, cmdTresorerie(C));
   if (name === 'mois') return reply('', eph, cmdMois(C, it));
   if (name === 'objectifs') return reply('', eph, cmdObjectifs(C));
-  if (GAME_CMDS[name]) { const v = cmdJeu(C, await seriesNames(), name); return reply(v.content, eph, v.embeds, v.components); }
+  if (GAME_CMDS[name]) return respond(it, eph, cmdJeu(C, await seriesNames(), name), false);
   if (name === 'carte') {
     const nom = String(opt(it, 'nom') || '').trim();
     const isId = !!nom && C.of('tcg').some(t => t._id === nom);
     const v = await carteView(C, { serie: String(opt(it, 'serie') || '').trim(), q: isId ? '' : nom, tri: opt(it, 'tri'), page: 0, focusId: isId ? nom : '' });
-    return reply(v.content, eph, v.embeds, v.components);
+    return respond(it, eph, v, false);
   }
   return reply('Commande inconnue.', true);
 }
@@ -541,8 +602,7 @@ async function component(it) {
   else if (op === 't') a = { serie, q, tri: val || tri, page: 0 };
   else if (op === 'v') a = { serie: val || '', q: '', tri: 'numero', page: 0 };
   else if (op === 'o') a = { tri };
-  const v = await carteView(C, a);
-  return { type: 7, data: { content: v.content || '', embeds: v.embeds || [], components: v.components || [], allowed_mentions: { parse: [] } } };
+  return respond(it, acc.eph, await carteView(C, a), true);
 }
 
 async function autocomplete(it) {
