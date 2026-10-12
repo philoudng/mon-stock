@@ -19,3 +19,8 @@ Les cartes et illustrations restent la propriété de leurs ayants droit (The Po
 - `supabase/schema.sql` : table `stock_entries` (une ligne par mouvement) et règles de sécurité : chaque compte ne lit et ne modifie que ses propres lignes. À coller une fois dans Supabase → SQL Editor → Run.
 - Le site garde tout dans l'appareil (fonctionne hors connexion) et synchronise : envoi des lignes modifiées, puis récupération de ce qui a changé ailleurs (heure du serveur). Une suppression est envoyée comme une ligne « supprimée ».
 - Seules l'adresse du projet et la clé **publique** (publishable / anon) vont dans le site. La clé secrète (service_role / sb_secret) ne doit jamais y être.
+
+## Bot Discord (facultatif)
+
+- `supabase/functions/discord/index.ts` : Edge Function Supabase qui reçoit les commandes Discord (`/tresorerie`, `/mois`, `/carte`, `/objectifs`, `/reglage`), vérifie la signature Ed25519 de Discord et calcule les chiffres comme le site à partir de `stock_entries`.
+- Réglages dans la table `bot_config` (lue seulement côté serveur) ; jeton du bot dans le secret `DISCORD_BOT_TOKEN`. Un seul serveur autorisé (celui du premier `/reglage`), bot privé.
