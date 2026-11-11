@@ -1,7 +1,7 @@
 // Mon Stock — fonctionnement hors connexion. Changer VERSION à chaque mise à jour.
-const VERSION = 'v57';
+const VERSION = 'v58';
 const CACHE = 'monstock-' + VERSION;
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
+const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/logo-32.png', './icons/logo-192.png', './icons/logo-512.png', './icons/logo-apple-180.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));

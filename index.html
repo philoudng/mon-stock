@@ -13,8 +13,9 @@
 <meta name="apple-mobile-web-app-title" content="Mon Stock">
 <script>if(location.protocol==="http:"&&location.hostname==="stock.philoudng.fr")location.replace("https://"+location.host+location.pathname+location.search+location.hash);</script>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/logo-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/logo-192.png">
+<link rel="apple-touch-icon" href="icons/logo-apple-180.png">
 <title>Mon Stock</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -90,6 +91,7 @@ img{max-width:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
 .wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:28px 56px;display:flex;flex-direction:column;gap:22px}
 header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 20px}
+h1 .logo{width:1.2em;height:1.2em;vertical-align:-.22em;margin-right:.4em;border-radius:22%}
 h1{font-family:var(--f-display);font-weight:700;font-size:2rem;letter-spacing:-.02em;margin:0}
 .date{font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
 .num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -387,7 +389,7 @@ td.zero{color:var(--muted)}
 <body>
 <div class="wrap">
   <header>
-    <h1>Mon Stock</h1>
+    <h1><img class="logo" src="icons/logo-192.png" alt="" width="40" height="40">Mon Stock</h1>
     <span class="hdr-r"><span class="date" id="today"></span><button type="button" class="sync-chip" id="sync-chip" hidden></button></span>
   </header>
   <div class="goal" id="goal" aria-label="Objectif financier"></div>
@@ -625,8 +627,9 @@ td.zero{color:var(--muted)}
       </details>
     </section>
     <details id="footer-details">
-      <summary>Version 57 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 58 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v58</span><span>Nouveau logo (le P rouge avec la corne et l&#x27;anneau doré) : à côté du titre, dans l&#x27;onglet du navigateur, sur l&#x27;icône de l&#x27;appli installée et comme image des messages Discord envoyés depuis le site.</span></li>
         <li><span class="v">v57</span><span>Compte en ligne : un petit œil à droite du mot de passe permet de voir ce qu&#x27;on écrit (et de le cacher à nouveau). Il se referme tout seul une fois connecté.</span></li>
         <li><span class="v">v56</span><span>Illustrations des anciennes cartes One Piece : la bonne version est choisie d&#x27;après l&#x27;extension du lien Cardmarket (ex. Luffytaro ST18-005 de « A Fist of Divine Speed »). Si elle n&#x27;est pas sûre, pas d&#x27;image plutôt qu&#x27;une mauvaise ; les images déjà ajoutées sont vérifiées.</span></li>
         <li><span class="v">v55</span><span>Illustrations ajoutées automatiquement aux anciennes cartes Pokémon et One Piece, retrouvées grâce au lien Cardmarket ou au numéro de la carte (mêmes images que le scan). Elles apparaissent aussi dans le bot Discord.</span></li>
@@ -2177,7 +2180,7 @@ td.zero{color:var(--muted)}
     if(d.lien) e.url=d.lien;
     if(desc) e.description=desc.slice(0,1000);
     if(imgUrl) e.image={url:imgUrl}; else if(withPhoto) e.image={url:'attachment://photo.jpg'};
-    const p={ username:'Mon Stock', avatar_url:'https://stock.philoudng.fr/icons/icon-192.png', embeds:[e], allowed_mentions:{parse:[]} };
+    const p={ username:'Mon Stock', avatar_url:'https://stock.philoudng.fr/icons/logo-192.png', embeds:[e], allowed_mentions:{parse:[]} };
     if(withPhoto && !imgUrl) p.attachments=[{id:0, filename:'photo.jpg', description:'Photo de la carte'}];
     return p;
   }
@@ -2221,7 +2224,7 @@ td.zero{color:var(--muted)}
     let c=dcGet(); const v=$('dc-url').value.trim();
     if(!c || (v && v!==c.url)){ c=dcSaveField(); if(!c) return; }
     const b=$('dc-test'); b.disabled=true; dcMsg('Envoi du test…');
-    try{ await dcSend(c, { username:'Mon Stock', avatar_url:'https://stock.philoudng.fr/icons/icon-192.png', allowed_mentions:{parse:[]},
+    try{ await dcSend(c, { username:'Mon Stock', avatar_url:'https://stock.philoudng.fr/icons/logo-192.png', allowed_mentions:{parse:[]},
         embeds:[{ title:'Mon Stock est relié à ce salon ✓', description:'Les cartes ajoutées avec le scan arriveront ici.', color:0x1F5C4A, footer:{text:'Mon Stock'}, timestamp:new Date().toISOString() }] });
       dcMsg('Test envoyé ✓ Regarde le salon sur Discord.'); }
     catch(e){ dcMsg(dcErrText(e).replace('carte non envoyée','test non envoyé').replace(' Vérifie-la en bas de page.',''), true); }
