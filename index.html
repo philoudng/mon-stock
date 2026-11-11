@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-title" content="Stock Philou">
 <meta name="application-name" content="Stock Philou">
 <script>if(location.protocol==="http:"&&location.hostname==="stock.philoudng.fr")location.replace("https://"+location.host+location.pathname+location.search+location.hash);</script>
-<script>try{if(localStorage.getItem("stock-palette")==="philou"){document.documentElement.dataset.palette="philou";document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.content=/dark/.test(m.media)?"#150d0d":"#f8f4f3";});}}catch(e){}</script>
+<script>try{var P=localStorage.getItem("stock-palette"),T=localStorage.getItem("stock-mode"),R=document.documentElement;if(P==="philou")R.dataset.palette="philou";if(T==="light"||T==="dark")R.dataset.mode=T;else T="";if(P||T)document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){var d=T?T==="dark":/dark/.test(m.media);m.content=P==="philou"?(d?"#150d0d":"#f8f4f3"):(d?"#0f1513":"#f3f5f4");});}catch(e){}</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/logo-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/logo-192.png">
@@ -108,13 +108,42 @@ img{max-width:100%}
   --good:#5ccb94; --bad:#ff9168; --warn:#f2c14e; --gold:#ffc61f;
   --lead:linear-gradient(135deg,#d8181b 0%,#a51c1c 55%,#6e1a1a 100%);
   --g-onepiece:#ff8a5c}
+/* Mode choisi en bas de page (Auto = comme l'appareil) : prioritaire sur le réglage de l'appareil */
+:root[data-mode="light"][data-mode]{
+  --bg:#f3f5f4; --surface:#ffffff; --sunk:#e8ecea; --line:#d5dcd9;
+  --fg:#16211d; --muted:#5c6a65; --accent:#1f5c4a; --accent-fg:#ffffff; --accent-soft:#dcebe5;
+  --good:#1d7a4f; --bad:#b3402f; --warn:#9a6a12;
+  --g-pokemon:#c99a00; --g-onepiece:#c23b2e; --g-lorcana:#6a4bb3; --g-riftbound:#1f7f8c; --g-babaticket:#b5563f; --g-divers:#4d6b8a; --g-autre:#7a8580; color-scheme:light}
+:root[data-mode="dark"][data-mode]{
+  --bg:#0f1513; --surface:#171f1c; --sunk:#1e2824; --line:#2c3833;
+  --fg:#e4ebe8; --muted:#94a39d; --accent:#6fc2a5; --accent-fg:#0b1310; --accent-soft:#1d3a31;
+  --good:#5ccb94; --bad:#ef8a78; --warn:#e2b45a;
+  --g-pokemon:#f0c63c; --g-onepiece:#f07a6c; --g-lorcana:#a98ef0; --g-riftbound:#5cc4d0; --g-babaticket:#e89a7e; --g-divers:#8fb0d4; --g-autre:#9aa8a2; color-scheme:dark}
+:root[data-palette="philou"][data-mode="light"][data-mode]{
+  --bg:#f8f4f3; --surface:#ffffff; --sunk:#f1e7e5; --line:#e6d5d2;
+  --fg:#211514; --muted:#6f5b58; --accent:#c8161b; --accent-fg:#ffffff; --accent-soft:#fbe2e0;
+  --good:#1d7a4f; --bad:#b0391c; --warn:#8f6400; --gold:#f2b705;
+  --lead:linear-gradient(135deg,#e31919 0%,#b81b1b 55%,#8b2020 100%);
+  --g-onepiece:#d4502a}
+:root[data-palette="philou"][data-mode="dark"][data-mode]{
+  --bg:#150d0d; --surface:#1f1515; --sunk:#2a1c1b; --line:#3d2b2a;
+  --fg:#f4eae8; --muted:#b6a3a0; --accent:#ff5c55; --accent-fg:#1e0707; --accent-soft:#3d1817;
+  --good:#5ccb94; --bad:#ff9168; --warn:#f2c14e; --gold:#ffc61f;
+  --lead:linear-gradient(135deg,#d8181b 0%,#a51c1c 55%,#6e1a1a 100%);
+  --g-onepiece:#ff8a5c}
 :root[data-palette="philou"] .tile.lead{background:var(--lead);color:#fff;box-shadow:inset 0 -3px 0 var(--gold)}
 :root[data-palette="philou"] .goal .gbar i{background:var(--gold)}
 :root[data-palette="philou"] .goal .gbar.done i{background:var(--good)}
 .pal{align-items:center}
 .pal-btn{display:inline-flex;align-items:center;gap:8px}
 .pal-btn .sw{width:18px;height:18px;border-radius:50%;flex:none;background:linear-gradient(135deg,var(--a) 0 50%,var(--b) 50% 100%);box-shadow:0 0 0 1px var(--line)}
-.pal-btn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--fg)}
+.pal-btn[aria-pressed="true"],.mode-opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--fg)}
+.mode-opt{display:inline-flex;align-items:center;gap:7px}
+.pal-lbl{flex-basis:100%;font-size:.8rem;font-weight:600;color:var(--muted)}
+.pal .btn{padding:7px 12px;font-size:.88rem}
+.mode-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;border:1px solid var(--line);border-radius:99px;background:var(--surface);color:var(--fg);cursor:pointer;align-self:center;flex:none}
+.mode-btn:hover{background:var(--sunk)}
+.mode-btn[data-now="light"] .i-sun,.mode-btn[data-now="dark"] .i-moon,.mode-btn:not([data-now]) .i-sun{display:none}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
 .wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:28px 56px;display:flex;flex-direction:column;gap:22px}
@@ -418,7 +447,7 @@ td.zero{color:var(--muted)}
 <div class="wrap">
   <header>
     <h1><img class="logo" src="icons/logo-192.png" alt="" width="40" height="40">Stock Philou</h1>
-    <span class="hdr-r"><span class="date" id="today"></span><button type="button" class="sync-chip" id="sync-chip" hidden></button></span>
+    <span class="hdr-r"><span class="date" id="today"></span><button type="button" class="mode-btn" id="mode-btn" aria-label="Passer en mode sombre" title="Passer en mode sombre"><svg class="i-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="i-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg></button><button type="button" class="sync-chip" id="sync-chip" hidden></button></span>
   </header>
   <div class="goal" id="goal" aria-label="Objectif financier"></div>
 
@@ -595,12 +624,18 @@ td.zero{color:var(--muted)}
     <div class="cam-bottom"><label class="cam-alt" for="scan-file">Importer une photo</label><button type="button" class="cam-shot" id="cam-shot" aria-label="Prendre la photo"></button><span></span></div>
   </div>
   <footer class="foot">
-    <section class="backup" aria-label="Couleurs du site">
-      <div class="bk-row"><strong>Couleurs</strong><span class="hint">la DA verte d’origine reste disponible</span></div>
-      <div class="actions pal" role="group" aria-label="Couleurs du site">
+    <section class="backup" aria-label="Apparence">
+      <div class="bk-row"><strong>Apparence</strong><span class="hint">la DA verte d’origine reste disponible</span></div>
+      <div class="actions pal" role="group" aria-label="Couleurs du site"><span class="pal-lbl">Couleurs</span>
         <button type="button" class="btn pal-btn" data-pal="" aria-pressed="true"><span class="sw" style="--a:#1f5c4a;--b:#dcebe5" aria-hidden="true"></span>Vert d’origine</button>
         <button type="button" class="btn pal-btn" data-pal="philou" aria-pressed="false"><span class="sw" style="--a:#e31919;--b:#f5c11e" aria-hidden="true"></span>Rouge Philou</button>
       </div>
+      <div class="actions pal" role="group" aria-label="Mode clair ou sombre"><span class="pal-lbl">Mode</span>
+        <button type="button" class="btn mode-opt" data-mode="" aria-pressed="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>Auto</button>
+        <button type="button" class="btn mode-opt" data-mode="light" aria-pressed="false"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Clair</button>
+        <button type="button" class="btn mode-opt" data-mode="dark" aria-pressed="false"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg>Sombre</button>
+      </div>
+      <p class="hint">Auto suit le réglage clair/sombre du téléphone ou de l’ordinateur. Le bouton soleil/lune en haut de page bascule aussi d’un mode à l’autre.</p>
     </section>
     <section class="backup acct" id="acct" aria-label="Compte en ligne">
       <div class="bk-row"><strong>Compte en ligne</strong><span class="hint" id="ac-state"></span></div>
@@ -662,8 +697,9 @@ td.zero{color:var(--muted)}
       </details>
     </section>
     <details id="footer-details">
-      <summary>Version 60 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 61 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v61</span><span>Mode clair ou sombre au choix : bouton soleil/lune en haut de page, ou Auto / Clair / Sombre en bas dans « Apparence » (Auto suit le réglage de l&#x27;appareil). Marche avec les deux DA.</span></li>
         <li><span class="v">v60</span><span>Nouvelle DA « Rouge Philou » aux couleurs du logo (rouge, touches dorées), en clair et en sombre. À choisir en bas de page dans « Couleurs » ; la DA verte d&#x27;origine reste celle par défaut.</span></li>
         <li><span class="v">v59</span><span>L&#x27;appli s&#x27;appelle maintenant « Stock Philou » : titre, onglet, nom sous l&#x27;icône de l&#x27;écran d&#x27;accueil, sauvegardes et messages Discord envoyés depuis le site.</span></li>
         <li><span class="v">v58</span><span>Nouveau logo (le P rouge avec la corne et l&#x27;anneau doré) : à côté du titre, dans l&#x27;onglet du navigateur, sur l&#x27;icône de l&#x27;appli installée et comme image des messages Discord envoyés depuis le site.</span></li>
@@ -2424,13 +2460,21 @@ td.zero{color:var(--muted)}
     btn.addEventListener('mousedown',e=>e.preventDefault()); // le curseur (et le clavier du téléphone) restent dans le champ
     btn.addEventListener('click',()=>pwShow(btn, btn.getAttribute('aria-pressed')!=='true'));
   });
-  // Couleurs du site : DA verte d'origine ou « Rouge Philou » (logo)
-  function setPalette(p, save){ const r=document.documentElement; if(p) r.dataset.palette=p; else delete r.dataset.palette;
-    document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{ const d=/dark/.test(m.media); m.content = p==='philou' ? (d?'#150d0d':'#f8f4f3') : (d?'#0f1513':'#f3f5f4'); });
-    document.querySelectorAll('.pal-btn').forEach(b=>b.setAttribute('aria-pressed', String((b.dataset.pal||'')===(p||''))));
-    if(save){ try{ if(p) localStorage.setItem('stock-palette',p); else localStorage.removeItem('stock-palette'); }catch(e){} } }
-  setPalette(document.documentElement.dataset.palette||'', false);
-  document.querySelectorAll('.pal-btn').forEach(b=>b.addEventListener('click',()=>setPalette(b.dataset.pal||'', true)));
+  // Apparence : couleurs (DA verte d'origine ou « Rouge Philou ») et mode (auto = comme l'appareil, clair, sombre)
+  const MQ_DARK = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+  function syncLook(){ const r=document.documentElement, p=r.dataset.palette||'', t=r.dataset.mode||'';
+    document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{ const d = t ? t==='dark' : /dark/.test(m.media); m.content = p==='philou' ? (d?'#150d0d':'#f8f4f3') : (d?'#0f1513':'#f3f5f4'); });
+    document.querySelectorAll('.pal-btn').forEach(b=>b.setAttribute('aria-pressed', String((b.dataset.pal||'')===p)));
+    document.querySelectorAll('.mode-opt').forEach(b=>b.setAttribute('aria-pressed', String((b.dataset.mode||'')===t)));
+    const dark = t ? t==='dark' : !!(MQ_DARK && MQ_DARK.matches), mb=$('mode-btn');
+    if(mb){ mb.dataset.now = dark?'dark':'light'; const l = dark?'Passer en mode clair':'Passer en mode sombre'; mb.setAttribute('aria-label',l); mb.title=l; } }
+  function setLook(key, attr, v){ const r=document.documentElement; if(v) r.dataset[attr]=v; else delete r.dataset[attr];
+    try{ if(v) localStorage.setItem(key,v); else localStorage.removeItem(key); }catch(e){} syncLook(); }
+  document.querySelectorAll('.pal-btn').forEach(b=>b.addEventListener('click',()=>setLook('stock-palette','palette',b.dataset.pal||'')));
+  document.querySelectorAll('.mode-opt').forEach(b=>b.addEventListener('click',()=>setLook('stock-mode','mode',b.dataset.mode||'')));
+  $('mode-btn').addEventListener('click',()=>setLook('stock-mode','mode', $('mode-btn').dataset.now==='dark'?'light':'dark'));
+  if(MQ_DARK){ if(MQ_DARK.addEventListener) MQ_DARK.addEventListener('change',syncLook); else if(MQ_DARK.addListener) MQ_DARK.addListener(syncLook); }
+  syncLook();
   const siteUrl=()=>location.origin+location.pathname;
   async function afterLogin(msg){
     SY.err=''; lastShownErr=''; acMsg(msg||''); $('ac-pass').value=''; pwHideAll(); renderAcct();

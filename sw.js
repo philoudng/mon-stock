@@ -1,5 +1,5 @@
 // Stock Philou — fonctionnement hors connexion. Changer VERSION à chaque mise à jour.
-const VERSION = 'v60';
+const VERSION = 'v61';
 const CACHE = 'monstock-' + VERSION;
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/logo-32.png', './icons/logo-192.png', './icons/logo-512.png', './icons/logo-apple-180.png'];
 
