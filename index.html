@@ -39,6 +39,14 @@ img{max-width:100%}
 .bk-confirm{background:var(--sunk);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
 .acct form,.acct .ac-box{display:flex;flex-direction:column;gap:10px;max-width:46ch}
 .acct .actions{align-items:center}
+.pw{position:relative;display:block}
+.pw input{padding-right:44px}
+.pw input::-ms-reveal,.pw input::-ms-clear{display:none}
+.pw-eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:36px;height:34px;border:0;background:none;color:var(--muted);cursor:pointer;border-radius:6px;padding:0}
+.pw-eye:hover{background:var(--sunk);color:var(--fg)}
+.pw-eye[aria-pressed="true"]{color:var(--accent)}
+.pw-eye .sl{display:none}
+.pw-eye[aria-pressed="true"] .sl{display:inline}
 .hint.warn{color:var(--warn)}
 .hdr-r{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .sync-chip{font:inherit;font-size:.75rem;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--good);border-radius:99px;padding:2px 10px;cursor:pointer;white-space:nowrap}
@@ -568,13 +576,13 @@ td.zero{color:var(--muted)}
       <form id="ac-login" hidden novalidate>
         <p class="hint">Connecte-toi pour garder une copie en ligne et retrouver tes données sur tes autres appareils. Elles restent aussi sur cet appareil, même hors connexion.</p>
         <label>E-mail<input id="ac-email" type="email" autocomplete="username" autocapitalize="off" spellcheck="false" required></label>
-        <label>Mot de passe<input id="ac-pass" type="password" autocomplete="current-password" required></label>
+        <label>Mot de passe<span class="pw"><input id="ac-pass" type="password" autocomplete="current-password" required><button type="button" class="pw-eye" aria-label="Afficher le mot de passe" aria-pressed="false" title="Afficher le mot de passe"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path class="sl" d="M3 3l18 18"/></svg></button></span></label>
         <div class="actions"><button type="submit" class="btn primary">Se connecter</button><button type="button" class="btn" id="ac-signup">Créer mon compte</button><button type="button" class="linkbtn" id="ac-forgot">Mot de passe oublié ?</button></div>
         <button type="button" class="linkbtn" id="ac-unlink" hidden style="align-self:flex-start;font-weight:500;font-size:.8rem">Changer de projet Supabase</button>
       </form>
       <form id="ac-newpass" hidden novalidate>
         <p class="hint">Choisis ton nouveau mot de passe.</p>
-        <label>Nouveau mot de passe<input id="ac-np" type="password" autocomplete="new-password" minlength="8" required></label>
+        <label>Nouveau mot de passe<span class="pw"><input id="ac-np" type="password" autocomplete="new-password" minlength="8" required><button type="button" class="pw-eye" aria-label="Afficher le mot de passe" aria-pressed="false" title="Afficher le mot de passe"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path class="sl" d="M3 3l18 18"/></svg></button></span></label>
         <div class="actions"><button type="submit" class="btn primary">Enregistrer le mot de passe</button></div>
       </form>
       <div class="actions" id="ac-in" hidden>
@@ -617,8 +625,9 @@ td.zero{color:var(--muted)}
       </details>
     </section>
     <details id="footer-details">
-      <summary>Version 56 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 57 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v57</span><span>Compte en ligne : un petit œil à droite du mot de passe permet de voir ce qu&#x27;on écrit (et de le cacher à nouveau). Il se referme tout seul une fois connecté.</span></li>
         <li><span class="v">v56</span><span>Illustrations des anciennes cartes One Piece : la bonne version est choisie d&#x27;après l&#x27;extension du lien Cardmarket (ex. Luffytaro ST18-005 de « A Fist of Divine Speed »). Si elle n&#x27;est pas sûre, pas d&#x27;image plutôt qu&#x27;une mauvaise ; les images déjà ajoutées sont vérifiées.</span></li>
         <li><span class="v">v55</span><span>Illustrations ajoutées automatiquement aux anciennes cartes Pokémon et One Piece, retrouvées grâce au lien Cardmarket ou au numéro de la carte (mêmes images que le scan). Elles apparaissent aussi dans le bot Discord.</span></li>
         <li><span class="v">v54</span><span>Bot Discord : l&#x27;illustration de la carte s&#x27;affiche (image envoyée par le bot, avec plusieurs sources de secours ; image retrouvée aussi pour les cartes enregistrées sans illustration).</span></li>
@@ -2364,9 +2373,20 @@ td.zero{color:var(--muted)}
         chip.className='sync-chip'+(SY.state==='err'?' err':SY.state==='sync'||pend?' busy':'');
         chip.title = t; } }
   }
+  // Œil : voir ou cacher le mot de passe pendant qu'on l'écrit
+  function pwShow(btn,on){ const inp=btn.parentNode.querySelector('input'); if(!inp) return;
+    const f=document.activeElement===inp, a=inp.selectionStart, z=inp.selectionEnd;
+    inp.type=on?'text':'password'; btn.setAttribute('aria-pressed',on?'true':'false');
+    const t=on?'Masquer le mot de passe':'Afficher le mot de passe'; btn.setAttribute('aria-label',t); btn.title=t;
+    if(f){ const put=()=>{ try{ inp.setSelectionRange(a,z); }catch(_){} }; put(); setTimeout(put,0); } }
+  function pwHideAll(){ document.querySelectorAll('.pw-eye').forEach(b=>pwShow(b,false)); }
+  document.querySelectorAll('.pw-eye').forEach(btn=>{
+    btn.addEventListener('mousedown',e=>e.preventDefault()); // le curseur (et le clavier du téléphone) restent dans le champ
+    btn.addEventListener('click',()=>pwShow(btn, btn.getAttribute('aria-pressed')!=='true'));
+  });
   const siteUrl=()=>location.origin+location.pathname;
   async function afterLogin(msg){
-    SY.err=''; lastShownErr=''; acMsg(msg||''); $('ac-pass').value=''; renderAcct();
+    SY.err=''; lastShownErr=''; acMsg(msg||''); $('ac-pass').value=''; pwHideAll(); renderAcct();
     await syncNow();
     if(SY.state==='ok'){ const n=S.raw.length; acMsg(`${msg?msg+' ':''}Tes ${n} ligne${n>1?'s':''} ${n>1?'sont':'est'} à jour en ligne.`); }
   }
