@@ -1,6 +1,6 @@
 {
-  "name": "Mon Stock",
-  "short_name": "Mon Stock",
+  "name": "Stock Philou",
+  "short_name": "Stock Philou",
   "description": "Trésorerie, abonnements, achats et ventes de cartes, bilan mensuel et annuel.",
   "lang": "fr",
   "start_url": "./",

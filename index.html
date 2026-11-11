@@ -10,13 +10,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Mon Stock">
+<meta name="apple-mobile-web-app-title" content="Stock Philou">
+<meta name="application-name" content="Stock Philou">
 <script>if(location.protocol==="http:"&&location.hostname==="stock.philoudng.fr")location.replace("https://"+location.host+location.pathname+location.search+location.hash);</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/logo-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/logo-192.png">
 <link rel="apple-touch-icon" href="icons/logo-apple-180.png">
-<title>Mon Stock</title>
+<title>Stock Philou</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -389,14 +390,14 @@ td.zero{color:var(--muted)}
 <body>
 <div class="wrap">
   <header>
-    <h1><img class="logo" src="icons/logo-192.png" alt="" width="40" height="40">Mon Stock</h1>
+    <h1><img class="logo" src="icons/logo-192.png" alt="" width="40" height="40">Stock Philou</h1>
     <span class="hdr-r"><span class="date" id="today"></span><button type="button" class="sync-chip" id="sync-chip" hidden></button></span>
   </header>
   <div class="goal" id="goal" aria-label="Objectif financier"></div>
 
   <p class="banner" id="banner" hidden></p>
   <section class="banner welcome" id="welcome" hidden>
-    <strong>Bienvenue sur ta version indépendante de Mon Stock.</strong>
+    <strong>Bienvenue sur ta version indépendante de Stock Philou.</strong>
     <span>Tes données sont enregistrées dans cet appareil. Pour retrouver celles de l’ancienne version, importe ta sauvegarde.</span>
     <span class="actions"><label class="btn primary filebtn">Importer une sauvegarde<input type="file" accept="application/json,.json" data-restore class="vh"></label><button type="button" class="btn" id="welcome-login" hidden>Me connecter à mon compte</button></span>
   </section>
@@ -627,8 +628,9 @@ td.zero{color:var(--muted)}
       </details>
     </section>
     <details id="footer-details">
-      <summary>Version 58 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 59 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v59</span><span>L&#x27;appli s&#x27;appelle maintenant « Stock Philou » : titre, onglet, nom sous l&#x27;icône de l&#x27;écran d&#x27;accueil, sauvegardes et messages Discord envoyés depuis le site.</span></li>
         <li><span class="v">v58</span><span>Nouveau logo (le P rouge avec la corne et l&#x27;anneau doré) : à côté du titre, dans l&#x27;onglet du navigateur, sur l&#x27;icône de l&#x27;appli installée et comme image des messages Discord envoyés depuis le site.</span></li>
         <li><span class="v">v57</span><span>Compte en ligne : un petit œil à droite du mot de passe permet de voir ce qu&#x27;on écrit (et de le cacher à nouveau). Il se referme tout seul une fois connecté.</span></li>
         <li><span class="v">v56</span><span>Illustrations des anciennes cartes One Piece : la bonne version est choisie d&#x27;après l&#x27;extension du lien Cardmarket (ex. Luffytaro ST18-005 de « A Fist of Divine Speed »). Si elle n&#x27;est pas sûre, pas d&#x27;image plutôt qu&#x27;une mauvaise ; les images déjà ajoutées sont vérifiées.</span></li>
@@ -2069,11 +2071,11 @@ td.zero{color:var(--muted)}
   async function doBackup(){
     const data=S.col?S.col.readAll():{};
     const payload={app:'mon-stock', format:1, exportedAt:new Date().toISOString(), count:Object.keys(data).length, data};
-    const name=`mon-stock-sauvegarde-${todayISO()}.json`;
+    const name=`stock-philou-sauvegarde-${todayISO()}.json`;
     const blob=new Blob([JSON.stringify(payload,null,1)],{type:'application/json'});
     let done=false;
     try{ const file=new File([blob],name,{type:'application/json'});
-      if(navigator.canShare && navigator.canShare({files:[file]}) && /iPhone|iPad|Android/i.test(navigator.userAgent)){ await navigator.share({files:[file], title:'Sauvegarde Mon Stock'}); done=true; } }catch(e){ if(e && e.name==='AbortError') return; }
+      if(navigator.canShare && navigator.canShare({files:[file]}) && /iPhone|iPad|Android/i.test(navigator.userAgent)){ await navigator.share({files:[file], title:'Sauvegarde Stock Philou'}); done=true; } }catch(e){ if(e && e.name==='AbortError') return; }
     if(!done){ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),4000); }
     try{ localStorage.setItem(BACKUP_KEY,String(Date.now())); }catch(e){}
     renderBackup(); showBkMsg('Sauvegarde créée. Garde le fichier dans Fichiers, iCloud Drive ou sur ton ordinateur.');
@@ -2082,7 +2084,7 @@ td.zero{color:var(--muted)}
   async function readBackupFile(file){
     let obj; try{ obj=JSON.parse(await file.text()); }catch(e){ throw 'Ce fichier n’est pas une sauvegarde lisible.'; }
     const data = obj && obj.app==='mon-stock' && obj.data && typeof obj.data==='object' ? obj.data : null;
-    if(!data) throw 'Ce fichier n’est pas une sauvegarde de Mon Stock.';
+    if(!data) throw 'Ce fichier n’est pas une sauvegarde de Stock Philou.';
     const clean={}; Object.keys(data).forEach(id=>{ const d=data[id]; if(d && typeof d==='object' && typeof d.kind==='string' && /^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(id)) clean[id]=d; });
     return clean;
   }
@@ -2176,11 +2178,11 @@ td.zero{color:var(--muted)}
     if(d.date && d.date!==todayISO()) fields.push({name:'Date', value:new Date(d.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}), inline:true});
     const desc=[info.sub, d.lien ? `🔗 [Voir sur Cardmarket](${d.lien})${filterLabel(d.lien)?` · ${filterLabel(d.lien)}`:''}` : ''].filter(Boolean).join('\n');
     const e={ author:{name:`${icon} ${kind} · ${gameName(d.jeu)}`}, title:(d.libelle||'Carte').slice(0,250), color:DC_COLORS[d.jeu]||DC_COLORS.autre,
-      fields, footer:{text:[d.categorie, 'Mon Stock'].filter(Boolean).join(' · ')}, timestamp:new Date().toISOString() };
+      fields, footer:{text:[d.categorie, 'Stock Philou'].filter(Boolean).join(' · ')}, timestamp:new Date().toISOString() };
     if(d.lien) e.url=d.lien;
     if(desc) e.description=desc.slice(0,1000);
     if(imgUrl) e.image={url:imgUrl}; else if(withPhoto) e.image={url:'attachment://photo.jpg'};
-    const p={ username:'Mon Stock', avatar_url:'https://stock.philoudng.fr/icons/logo-192.png', embeds:[e], allowed_mentions:{parse:[]} };
+    const p={ username:'Stock Philou', avatar_url:'https://stock.philoudng.fr/icons/logo-192.png', embeds:[e], allowed_mentions:{parse:[]} };
     if(withPhoto && !imgUrl) p.attachments=[{id:0, filename:'photo.jpg', description:'Photo de la carte'}];
     return p;
   }
@@ -2224,8 +2226,8 @@ td.zero{color:var(--muted)}
     let c=dcGet(); const v=$('dc-url').value.trim();
     if(!c || (v && v!==c.url)){ c=dcSaveField(); if(!c) return; }
     const b=$('dc-test'); b.disabled=true; dcMsg('Envoi du test…');
-    try{ await dcSend(c, { username:'Mon Stock', avatar_url:'https://stock.philoudng.fr/icons/logo-192.png', allowed_mentions:{parse:[]},
-        embeds:[{ title:'Mon Stock est relié à ce salon ✓', description:'Les cartes ajoutées avec le scan arriveront ici.', color:0x1F5C4A, footer:{text:'Mon Stock'}, timestamp:new Date().toISOString() }] });
+    try{ await dcSend(c, { username:'Stock Philou', avatar_url:'https://stock.philoudng.fr/icons/logo-192.png', allowed_mentions:{parse:[]},
+        embeds:[{ title:'Stock Philou est relié à ce salon ✓', description:'Les cartes ajoutées avec le scan arriveront ici.', color:0x1F5C4A, footer:{text:'Stock Philou'}, timestamp:new Date().toISOString() }] });
       dcMsg('Test envoyé ✓ Regarde le salon sur Discord.'); }
     catch(e){ dcMsg(dcErrText(e).replace('carte non envoyée','test non envoyé').replace(' Vérifie-la en bas de page.',''), true); }
     finally{ b.disabled=false; }

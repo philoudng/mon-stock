@@ -1,4 +1,4 @@
-# Mon Stock
+# Stock Philou
 
 Site personnel de suivi : trésorerie (comptes et espèces), abonnements, achats / ventes / cartes obtenues par jeu (Pokémon, One Piece, Lorcana, Riftbound, Babaticket, Divers), cotes Cardmarket, objectifs financiers, bilan mensuel et annuel.
 
