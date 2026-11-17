@@ -135,6 +135,73 @@ img{max-width:100%}
 :root[data-palette="philou"] .goal .gbar i{background:var(--gold)}
 :root[data-palette="philou"] .goal .gbar.done i{background:var(--good)}
 .pal{align-items:center}
+/* ---- Vues : Stock / Balance ---- */
+.views{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;background:var(--sunk);border-radius:12px;max-width:420px;width:100%}
+.views button{font:inherit;font-weight:600;font-size:.92rem;border:0;border-radius:9px;background:none;color:var(--muted);padding:9px 10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.views button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.views button[aria-pressed="true"] svg{color:var(--accent)}
+body.view-bal .wrap > :is(.goal,#welcome,#bk-remind,.tiles,.month,.tabs,.panel,.bilan){display:none!important}
+/* Écran d'ouverture */
+.launch{position:fixed;inset:0;z-index:80;background:var(--bg);display:flex;align-items:center;justify-content:center;overflow-y:auto;
+  padding:calc(env(safe-area-inset-top,0px) + 24px) 20px calc(env(safe-area-inset-bottom,0px) + 24px)}
+.launch[hidden]{display:none}
+.launch-in{outline:none;width:min(560px,100%);display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.launch-logo{width:76px;height:76px;border-radius:22%;margin-bottom:6px}
+.launch h2{font-family:var(--f-display);font-weight:700;font-size:1.8rem;letter-spacing:-.02em;margin:0}
+.launch p{margin:0 0 14px;color:var(--muted)}
+.launch-ch{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}
+.launch-ch button{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px 16px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:6px;transition:border-color .15s,transform .15s}
+.launch-ch button:hover{border-color:var(--accent)}
+.launch-ch button:active{transform:scale(.98)}
+.launch-ch svg{color:var(--accent);margin-bottom:4px}
+.launch-ch b{font-family:var(--f-display);font-weight:700;font-size:1.25rem}
+.launch-ch .t{display:flex;flex-direction:column;align-items:inherit;gap:2px;color:var(--fg)}
+.launch-ch .t > span{font-size:.85rem;color:var(--muted)}
+@media (max-width:420px){ .launch-ch{grid-template-columns:1fr} .launch-ch button{flex-direction:row;justify-content:flex-start;text-align:left;padding:16px;gap:14px} .launch-ch button svg{margin:0;flex:none} .launch-ch .t{align-items:flex-start} }
+@media (prefers-reduced-motion:reduce){ .launch-ch button{transition:none} }
+/* Balance */
+.bal{display:flex;flex-direction:column;gap:16px}
+.bal[hidden]{display:none}
+.bal-head h2{font-family:var(--f-display);font-weight:500;font-size:1.35rem;margin:0 0 2px}
+.bal-head p{margin:0;color:var(--muted);font-size:.9rem;max-width:70ch}
+.bal-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.bal-box h3{font-family:var(--f-display);font-weight:500;font-size:1.1rem;margin:0}
+.bal-row{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,.9fr) minmax(0,.7fr) minmax(0,1.1fr) minmax(0,1.4fr);gap:10px}
+@media (max-width:760px){ .bal-row{grid-template-columns:1fr 1fr} .bal-row label:last-child{grid-column:1 / -1} }
+.bal textarea{font:inherit;font-family:var(--f-mono);font-size:.88rem;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;width:100%;resize:vertical;min-height:72px}
+.bal-more{border-top:1px solid var(--line);padding-top:10px}
+.bal-more summary{cursor:pointer;font-weight:600;font-size:.88rem;color:var(--muted);width:max-content;max-width:100%}
+.bal-more[open] summary{margin-bottom:10px}
+.bal-more > *:not(summary){margin-top:10px}
+.bal-say{margin:0;font-size:.85rem;color:var(--muted);min-height:1.2em}
+.bal-say.err{color:var(--bad)}
+.bal-grp{padding:12px 0;border-top:1px solid var(--line)}
+.bal-grp:first-child{border-top:0;padding-top:0}
+.bal-gh{display:flex;justify-content:space-between;align-items:baseline;gap:6px 12px;flex-wrap:wrap;margin-bottom:6px}
+.bal-gn{font-weight:600}
+.bal-st{display:flex;gap:4px 14px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
+.bal-st b{font-family:var(--f-mono);font-weight:500;color:var(--fg);font-variant-numeric:tabular-nums}
+.bal-v{font-size:.85rem;padding:8px 10px;border-radius:8px;background:var(--sunk);border-left:3px solid var(--line);margin:6px 0}
+.bal-v.ok{border-left-color:var(--good)} .bal-v.warn{border-left-color:var(--warn)}
+.bal-strip{display:block;width:100%;height:auto}
+.bal-leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.78rem;color:var(--muted)}
+.bal-leg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+ul.bal-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.bal-it{display:grid;grid-template-columns:2.6em minmax(0,1fr) auto auto;gap:4px 12px;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line)}
+.bal-n{font-family:var(--f-mono);font-size:.78rem;color:var(--muted)}
+.bal-main{display:flex;flex-direction:column;min-width:0}
+.bal-main b{font-family:var(--f-mono);font-weight:500;font-variant-numeric:tabular-nums}
+.bal-main small{font-size:.78rem;color:var(--muted);overflow-wrap:anywhere}
+.bal-ops{display:flex;gap:4px;align-items:center;justify-content:flex-end}
+.bal-ops select{width:auto;padding:5px 8px;font-size:.85rem}
+.bal-tag{font-size:.7rem;font-weight:600;padding:2px 9px;border-radius:99px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.bal-tag.hit{background:var(--accent-soft);color:var(--accent)}
+.bal-tag.no{background:var(--sunk);color:var(--muted)}
+.bal-tag.unk{color:var(--muted);border:1px dashed var(--line)}
+@media (max-width:560px){ .bal-it{grid-template-columns:2.2em minmax(0,1fr) auto} .bal-ops{grid-column:2 / -1;justify-content:flex-start} }
+.bal-note{font-size:.8rem;color:var(--muted);margin:0;max-width:80ch}
+.bal-empty{color:var(--muted);font-size:.9rem;padding:10px 0;margin:0}
 .pal-btn{display:inline-flex;align-items:center;gap:8px}
 .pal-btn .sw{width:18px;height:18px;border-radius:50%;flex:none;background:linear-gradient(135deg,var(--a) 0 50%,var(--b) 50% 100%);box-shadow:0 0 0 1px var(--line)}
 .pal-btn[aria-pressed="true"],.mode-opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--fg)}
@@ -444,11 +511,26 @@ td.zero{color:var(--muted)}
 </style>
 </head>
 <body>
+<div class="launch" id="launch" role="dialog" aria-modal="true" aria-labelledby="launch-t">
+  <div class="launch-in" tabindex="-1">
+    <img class="launch-logo" id="launch-logo" alt="" width="76" height="76">
+    <h2 id="launch-t">Stock Philou</h2>
+    <p>Que veux-tu ouvrir ?</p>
+    <div class="launch-ch">
+      <button type="button" data-view="stock"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="6" width="12" height="15" rx="2"/><path d="M8 3h10a2 2 0 0 1 2 2v13"/></svg><span class="t"><b>Stock</b><span>Trésorerie, achats, ventes, bilan</span></span></button>
+      <button type="button" data-view="balance"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v17M7 20h10M4 7h16"/><path d="M7 7l-3 7a3 3 0 0 0 6 0z"/><path d="M17 7l-3 7a3 3 0 0 0 6 0z"/></svg><span class="t"><b>Balance</b><span>Peser tes boosters</span></span></button>
+    </div>
+  </div>
+</div>
 <div class="wrap">
   <header>
     <h1><img class="logo" src="icons/logo-192.png" alt="" width="40" height="40">Stock Philou</h1>
     <span class="hdr-r"><span class="date" id="today"></span><button type="button" class="mode-btn" id="mode-btn" aria-label="Passer en mode sombre" title="Passer en mode sombre"><svg class="i-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="i-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg></button><button type="button" class="sync-chip" id="sync-chip" hidden></button></span>
   </header>
+  <nav class="views" aria-label="Choisir entre le stock et la balance">
+    <button type="button" data-view="stock" aria-pressed="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="6" width="12" height="15" rx="2"/><path d="M8 3h10a2 2 0 0 1 2 2v13"/></svg>Stock</button>
+    <button type="button" data-view="balance" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v17M7 20h10M4 7h16"/><path d="M7 7l-3 7a3 3 0 0 0 6 0z"/><path d="M17 7l-3 7a3 3 0 0 0 6 0z"/></svg>Balance</button>
+  </nav>
   <div class="goal" id="goal" aria-label="Objectif financier"></div>
 
   <p class="banner" id="banner" hidden></p>
@@ -623,6 +705,51 @@ td.zero{color:var(--muted)}
     <div class="cam-top"><button type="button" id="cam-close">✕ Fermer</button><span class="cam-status" id="cam-status" aria-live="polite"></span></div>
     <div class="cam-bottom"><label class="cam-alt" for="scan-file">Importer une photo</label><button type="button" class="cam-shot" id="cam-shot" aria-label="Prendre la photo"></button><span></span></div>
   </div>
+  <!-- BALANCE (pesée de boosters) -->
+  <section class="bal" id="bal" hidden aria-labelledby="bal-t">
+    <div class="bal-head">
+      <h2 id="bal-t">Balance</h2>
+      <p>Note le poids de chaque booster, puis ce qu’il contenait une fois ouvert. Le seuil lourd/léger se calcule tout seul, séparément par série, langue et display.</p>
+    </div>
+    <form class="bal-box" id="bal-f" novalidate>
+      <h3>Ajouter un booster</h3>
+      <div class="bal-row">
+        <label>Poids (g)<input id="bal-w" inputmode="decimal" autocomplete="off" placeholder="26,05" required></label>
+        <label>Série<input id="bal-serie" maxlength="30" autocomplete="off" placeholder="EB05"></label>
+        <label>Langue<select id="bal-lang"><option>FR</option><option>EN</option><option>JP</option></select></label>
+        <label>Display / lot<input id="bal-box" maxlength="40" autocomplete="off" placeholder="Display 1"></label>
+        <label>Contenu (si ouvert)<select id="bal-res"><option value="">Pas encore ouvert</option><option value="hit">Hit (SR, SP, alt, SEC…)</option><option value="no">Pas de hit</option></select></label>
+      </div>
+      <div class="actions"><button class="btn primary" type="submit">Ajouter</button></div>
+      <p class="bal-say" id="bal-say" aria-live="polite"></p>
+      <details class="bal-more" id="bal-more">
+        <summary>Ajout rapide, import et export</summary>
+        <label>Un poids par ligne (ou séparés par des espaces), avec la série, la langue et le display choisis au-dessus<textarea id="bal-bulk" rows="3" placeholder="26,03&#10;26,08&#10;25,97"></textarea></label>
+        <div class="actions">
+          <button class="btn" type="button" id="bal-bulk-go">Ajouter la liste</button>
+          <button class="btn" type="button" id="bal-imp-open">Importer un CSV</button>
+          <button class="btn" type="button" id="bal-csv">Copier en CSV</button>
+          <button class="btn" type="button" id="bal-clear">Tout effacer</button>
+        </div>
+        <div id="bal-imp" hidden>
+          <label>Colle ici le CSV (par ex. copié avec « Copier en CSV » sur ta page « Pesée boosters » de Claude)<textarea id="bal-imp-txt" rows="4" placeholder="num;poids_g;langue;display;contenu;classement"></textarea></label>
+          <div class="actions"><button class="btn primary" type="button" id="bal-imp-go">Importer</button><button class="btn" type="button" id="bal-imp-x">Annuler</button></div>
+        </div>
+        <div id="bal-out-w" hidden><label>Copie le texte ci-dessous<textarea id="bal-out" rows="4" readonly></textarea></label></div>
+        <p class="bal-say" id="bal-confirm" hidden>Effacer toutes les pesées ? <button class="btn" type="button" id="bal-clear-yes">Oui, tout effacer</button> <button class="btn" type="button" id="bal-clear-no">Annuler</button></p>
+      </details>
+    </form>
+    <div class="bal-box">
+      <h3>Analyse par display</h3>
+      <div id="bal-groups"></div>
+      <div class="bal-leg"><span><i style="background:var(--accent)"></i>Hit</span><span><i style="background:var(--g-divers)"></i>Pas de hit</span><span><i style="background:var(--muted);opacity:.5"></i>Pas ouvert</span><span>trait pointillé = seuil</span></div>
+    </div>
+    <div class="bal-box">
+      <h3>Tous les boosters <span class="num" id="bal-count" style="font-size:.85rem;color:var(--muted)"></span></h3>
+      <div id="bal-list"></div>
+    </div>
+    <p class="bal-note">Comment le seuil est calculé : si tu as ouvert au moins un booster avec hit et un sans hit dans le même display, le seuil est placé entre le hit le plus léger et le non-hit le plus lourd. Si les deux se chevauchent, le seuil devient la moyenne des deux groupes et il est marqué peu fiable. Sans données d’ouverture, c’est une simple estimation (médiane + 0,04 g, d’après les écarts observés sur les sets One Piece récents en anglais). Le poids reste une tendance, jamais une garantie.</p>
+  </section>
   <footer class="foot">
     <section class="backup" aria-label="Apparence">
       <div class="bk-row"><strong>Apparence</strong><span class="hint">la DA verte d’origine reste disponible</span></div>
@@ -697,8 +824,9 @@ td.zero{color:var(--muted)}
       </details>
     </section>
     <details id="footer-details">
-      <summary>Version 61 · <span class="u">Mises à jour</span></summary>
+      <summary>Version 62 · <span class="u">Mises à jour</span></summary>
       <ol class="log">
+        <li><span class="v">v62</span><span>Balance : à l&#x27;ouverture, choix entre le Stock et la Balance (pesée de boosters, seuil lourd/léger calculé par série, langue et display). Bascule Stock / Balance en haut de page ; les pesées sont sauvegardées et synchronisées avec le reste.</span></li>
         <li><span class="v">v61</span><span>Mode clair ou sombre au choix : bouton soleil/lune en haut de page, ou Auto / Clair / Sombre en bas dans « Apparence » (Auto suit le réglage de l&#x27;appareil). Marche avec les deux DA.</span></li>
         <li><span class="v">v60</span><span>Nouvelle DA « Rouge Philou » aux couleurs du logo (rouge, touches dorées), en clair et en sombre. À choisir en bas de page dans « Couleurs » ; la DA verte d&#x27;origine reste celle par défaut.</span></li>
         <li><span class="v">v59</span><span>L&#x27;appli s&#x27;appelle maintenant « Stock Philou » : titre, onglet, nom sous l&#x27;icône de l&#x27;écran d&#x27;accueil, sauvegardes et messages Discord envoyés depuis le site.</span></li>
@@ -898,6 +1026,7 @@ td.zero{color:var(--muted)}
     if(S.tab==='abonnements') renderAchats();
     if(S.tab==='tcg') renderTcg();
     if(S.tab==='bilan') renderBilan();
+    if(S.view==='balance') renderBal();
   }
 
   function renderMonth(){
@@ -1601,6 +1730,142 @@ td.zero{color:var(--muted)}
   async function remove(id){ if(!S.col) return; try{ await S.col.doc(id).delete(); }catch(e){ showBanner(errText(e)); render(); } }
   function showBanner(t){ const b=$('banner'); b.textContent=t||''; b.hidden=!t; }
 
+  // ---- Balance : pesée de boosters (lignes « pesee » rangées avec le reste des données)
+  S.view='stock';
+  const BAL_LAST='bal-last';
+  const balFmt = n => n.toFixed(2).replace('.', ',');
+  const balW = s => { const v=parseFloat(String(s==null?'':s).trim().replace(/\s/g,'').replace(',', '.')); return isFinite(v) && v>0 && v<1000 ? Math.round(v*100)/100 : null; };
+  const balEsc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const pesees = () => S.raw.filter(e=>e.kind==='pesee' && typeof e.w==='number');
+  function balSay(t, err){ const el=$('bal-say'); if(!el) return; el.textContent=t||''; el.classList.toggle('err', !!err); }
+  function balDefaults(){ let d={}; try{ d=JSON.parse(localStorage.getItem(BAL_LAST)||'{}')||{}; }catch(e){}
+    $('bal-serie').value = d.serie||'EB05'; $('bal-lang').value = ['FR','EN','JP'].includes(d.lang)?d.lang:'FR'; $('bal-box').value = d.box||'Display 1'; }
+  function balRemember(){ try{ localStorage.setItem(BAL_LAST, JSON.stringify({serie:$('bal-serie').value.trim(), lang:$('bal-lang').value, box:$('bal-box').value.trim()})); }catch(e){} }
+  let balSeq=0;
+  const balNewId = () => 'pesee-'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+  function balEntry(w, res, o){ o=o||{}; return {kind:'pesee', w, serie:(o.serie!=null?o.serie:$('bal-serie').value).trim()||'EB05', lang:o.lang||$('bal-lang').value, box:(o.box!=null?o.box:$('bal-box').value).trim()||'Display 1', res:res||'', t:Date.now()+(++balSeq)/100}; }
+  async function balPutMany(map){ // map id -> data
+    if(!S.col){ balSay('L’enregistrement n’est pas disponible dans ce navigateur.', true); return false; }
+    try{ if(S.col.setMany) await S.col.setMany(map); else for(const id of Object.keys(map)) await S.col.doc(id).set(map[id]); return true; }
+    catch(e){ balSay(errText(e), true); return false; } }
+  async function balDelMany(ids){ if(!S.col) return;
+    try{ if(S.col.deleteMany) await S.col.deleteMany(ids); else for(const id of ids) await S.col.doc(id).delete(); }catch(e){ balSay(errText(e), true); } }
+
+  function balMedian(a){ const s=[...a].sort((x,y)=>x-y), m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; }
+  function balMean(a){ return a.reduce((x,y)=>x+y,0)/a.length; }
+  const balKey = p => `${p.serie||'EB05'} · ${p.lang||''} · ${p.box||''}`;
+  function balGroups(){ const g={}; pesees().forEach(p=>{ (g[balKey(p)]=g[balKey(p)]||[]).push(p); }); return g; }
+  function balNumbers(){ const n={}; pesees().sort((a,b)=>(a.t||0)-(b.t||0)).forEach((p,i)=>n[p._id]=i+1); return n; }
+  function balAnalyse(list){
+    const all=list.map(p=>p.w), H=list.filter(p=>p.res==='hit').map(p=>p.w), N=list.filter(p=>p.res==='no').map(p=>p.w);
+    let thr=null, kind='est', msg;
+    if(H.length && N.length){ const minH=Math.min(...H), maxN=Math.max(...N);
+      if(minH>maxN){ thr=(minH+maxN)/2; kind='ok'; msg=`Séparation nette : tous les hits pèsent au moins ${balFmt(minH)} g et tous les non-hits au plus ${balFmt(maxN)} g. Seuil à ${balFmt(thr)} g.`; }
+      else { thr=(balMean(H)+balMean(N))/2; kind='warn'; msg=`Chevauchement : des hits sont plus légers que certains non-hits (hit le plus léger ${balFmt(minH)} g, non-hit le plus lourd ${balFmt(maxN)} g). Seuil indicatif à ${balFmt(thr)} g, peu fiable.`; } }
+    else if(all.length>=3){ thr=balMedian(all)+0.04; msg=`Estimation sans ouverture : médiane ${balFmt(balMedian(all))} g + 0,04 g = ${balFmt(thr)} g. Ouvre quelques boosters (lourds et légers) et note leur contenu pour un vrai seuil.`; }
+    else msg='Ajoute au moins 3 boosters pour une estimation.';
+    return {all,H,N,thr,kind,msg};
+  }
+  function balClassify(){ const out={}; Object.values(balGroups()).forEach(list=>{ const a=balAnalyse(list); if(a.thr!==null) list.forEach(p=>{ out[p._id] = p.w>=a.thr ? 'lourd' : 'léger'; }); }); return out; }
+  function balStrip(list, thr){
+    const ws=list.map(p=>p.w); let lo=Math.min(...ws), hi=Math.max(...ws);
+    if(thr!==null){ lo=Math.min(lo,thr); hi=Math.max(hi,thr); }
+    if(hi-lo<0.1){ const c=(hi+lo)/2; lo=c-0.05; hi=c+0.05; }
+    const pad=(hi-lo)*0.08; lo-=pad; hi+=pad;
+    const W=Math.max(300, Math.min(1000, ($('bal-groups').clientWidth||900))), H=92, L=16, R=16, x=v=>L+(v-lo)/(hi-lo)*(W-L-R);
+    const col=r=> r==='hit'?'var(--accent)':r==='no'?'var(--g-divers)':'var(--muted)';
+    const seen={}; let dots='';
+    [...list].sort((a,b)=>a.w-b.w).forEach(p=>{ const k=p.w.toFixed(2), n=seen[k]=(seen[k]||0)+1, cy=54-(n-1)*10;
+      dots+=`<circle cx="${x(p.w).toFixed(1)}" cy="${cy}" r="4.5" style="fill:${col(p.res)};opacity:${p.res?1:.5}"><title>${balFmt(p.w)} g</title></circle>`; });
+    const span=hi-lo, step= span>0.6?0.1 : span>0.25?0.05 : 0.02, lab = W<480 ? step*2 : step;
+    let ticks='';
+    for(let t=Math.ceil(lo/step)*step; t<=hi+1e-9; t+=step){ const isLab=Math.abs(Math.round(t/lab)*lab-t)<1e-6;
+      ticks+=`<line x1="${x(t).toFixed(1)}" x2="${x(t).toFixed(1)}" y1="62" y2="${isLab?67:65}" style="stroke:var(--line)"/>`+(isLab?`<text x="${x(t).toFixed(1)}" y="82" font-size="11" text-anchor="middle" style="fill:var(--muted)">${balFmt(t)}</text>`:''); }
+    const tl= thr!==null ? `<line x1="${x(thr).toFixed(1)}" x2="${x(thr).toFixed(1)}" y1="10" y2="64" style="stroke:var(--fg)" stroke-dasharray="3 3"/><text x="${(x(thr)+(x(thr)>W-90?-4:4)).toFixed(1)}" y="18" font-size="11" text-anchor="${x(thr)>W-90?'end':'start'}" style="fill:var(--fg)">seuil ${balFmt(thr)} g</text>` : '';
+    return `<svg class="bal-strip" viewBox="0 0 ${W} ${H}" role="img" aria-label="Répartition des poids"><line x1="${L}" x2="${W-R}" y1="62" y2="62" style="stroke:var(--line)"/>${ticks}${tl}${dots}</svg>`;
+  }
+  function renderBal(){
+    if(!$('bal')) return;
+    const g=balGroups(), keys=Object.keys(g).sort((a,b)=>a.localeCompare(b,'fr'));
+    $('bal-groups').innerHTML = keys.length ? keys.map(k=>{ const list=g[k], a=balAnalyse(list), heavy=a.thr===null?'–':list.filter(p=>p.w>=a.thr).length;
+      return `<div class="bal-grp"><div class="bal-gh"><span class="bal-gn">${balEsc(k)}</span><span class="bal-st"><span><b>${list.length}</b> boosters</span><span>moy. <b>${balFmt(balMean(a.all))}</b> g</span><span>min <b>${balFmt(Math.min(...a.all))}</b></span><span>max <b>${balFmt(Math.max(...a.all))}</b></span><span>ouverts <b>${a.H.length+a.N.length}</b> (${a.H.length} hit${a.H.length>1?'s':''})</span><span>au-dessus du seuil <b>${heavy}</b></span></span></div>
+        <div class="bal-v ${a.kind}">${a.msg}</div>${balStrip(list,a.thr)}</div>`; }).join('') : '<p class="bal-empty">Aucune pesée pour l’instant.</p>';
+    const cls=balClassify(), num=balNumbers();
+    const rows=pesees().sort((a,b)=>balKey(a).localeCompare(balKey(b),'fr') || b.w-a.w);
+    $('bal-count').textContent = rows.length ? `· ${rows.length}` : '';
+    $('bal-list').innerHTML = rows.length ? `<ul class="bal-list">${rows.map(p=>{ const c=cls[p._id];
+      const tag=!c?'<span class="bal-tag unk">–</span>':c==='lourd'?'<span class="bal-tag hit">lourd</span>':'<span class="bal-tag no">léger</span>';
+      return `<li class="bal-it"><span class="bal-n">#${num[p._id]}</span><span class="bal-main"><b>${balFmt(p.w)} g</b><small>${balEsc(balKey(p))}</small></span>${tag}
+        <span class="bal-ops"><select data-k="${balEsc(p._id)}" aria-label="Contenu du booster n°${num[p._id]}"><option value=""${!p.res?' selected':''}>Pas ouvert</option><option value="hit"${p.res==='hit'?' selected':''}>Hit</option><option value="no"${p.res==='no'?' selected':''}>Pas de hit</option></select><button class="ico danger" type="button" data-del="${balEsc(p._id)}" aria-label="Supprimer le booster n°${num[p._id]}">Suppr.</button></span></li>`; }).join('')}</ul>`
+      : '<p class="bal-empty">Ajoute ton premier booster au-dessus.</p>';
+  }
+  $('bal-list').addEventListener('change', e=>{ const s=e.target.closest('select[data-k]'); if(!s) return;
+    const p=S.raw.find(x=>x._id===s.dataset.k); if(!p) return; const d={...p}; delete d._id; d.res=s.value; balPutMany({[p._id]:d}); });
+  $('bal-list').addEventListener('click', e=>{ const b=e.target.closest('button[data-del]'); if(!b) return; balDelMany([b.dataset.del]); balSay('Booster supprimé.'); });
+  $('bal-f').addEventListener('submit', async e=>{ e.preventDefault();
+    const w=balW($('bal-w').value); if(w===null){ balSay('Poids invalide : écris par exemple 26,05.', true); $('bal-w').focus(); return; }
+    balRemember(); const ok=await balPutMany({[balNewId()]: balEntry(w, $('bal-res').value)});
+    if(ok){ balSay(`${balFmt(w)} g ajouté.`); $('bal-w').value=''; $('bal-res').value=''; $('bal-w').focus(); } });
+  $('bal-bulk-go').addEventListener('click', async ()=>{
+    const vals=$('bal-bulk').value.split(/[\s;]+/).map(balW).filter(v=>v!==null);
+    if(!vals.length){ balSay('Aucun poids lisible dans la liste.', true); return; }
+    balRemember(); const map={}; vals.forEach((v,i)=>{ map[balNewId()+i]=balEntry(v,''); });
+    if(await balPutMany(map)){ $('bal-bulk').value=''; balSay(`${vals.length} booster${vals.length>1?'s':''} ajouté${vals.length>1?'s':''}.`); } });
+  // Import CSV (format de la page « Pesée boosters » ou de « Copier en CSV »)
+  function balParse(txt){
+    const lines=String(txt||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean); if(!lines.length) return [];
+    const sep = lines.some(l=>l.includes(';')) ? ';' : lines.some(l=>l.includes('\t')) ? '\t' : null;
+    if(!sep) return lines.join(' ').split(/\s+/).map(balW).filter(v=>v!==null).map(w=>({w}));
+    const head=lines[0].toLowerCase().split(sep).map(s=>s.trim()), hasHead=head.some(h=>/poids|langue|display|contenu/.test(h));
+    const find=(re,def)=>{ const i=head.findIndex(h=>re.test(h)); return hasHead ? i : def; };
+    const ix={w:find(/poids/,1), serie:find(/s[ée]rie/,-1), lang:find(/langue/,2), box:find(/display|lot/,3), res:find(/contenu/,4)};
+    return (hasHead?lines.slice(1):lines).map(l=>{ const c=l.split(sep).map(s=>s.trim()); const w=balW(c[ix.w]); if(w===null) return null;
+      const r=(c[ix.res]||'').toLowerCase(); const res = /pas de hit|non-hit|^no$/.test(r) ? 'no' : /hit/.test(r) ? 'hit' : '';
+      const lang=(c[ix.lang]||'').toUpperCase();
+      return {w, res, serie: ix.serie>=0 && c[ix.serie] ? c[ix.serie] : undefined, lang: ['FR','EN','JP'].includes(lang)?lang:undefined, box: c[ix.box]||undefined}; }).filter(Boolean);
+  }
+  $('bal-imp-open').addEventListener('click', ()=>{ $('bal-imp').hidden=false; $('bal-out-w').hidden=true; $('bal-imp-txt').focus(); });
+  $('bal-imp-x').addEventListener('click', ()=>{ $('bal-imp').hidden=true; $('bal-imp-txt').value=''; });
+  $('bal-imp-go').addEventListener('click', async ()=>{
+    const rows=balParse($('bal-imp-txt').value); if(!rows.length){ balSay('Rien à importer : colle le texte copié avec « Copier en CSV ».', true); return; }
+    const have={}; pesees().forEach(p=>{ const k=`${p.w.toFixed(2)}|${p.serie}|${p.lang}|${p.box}`; have[k]=(have[k]||0)+1; });
+    const map={}; let skip=0, i=0;
+    rows.forEach(r=>{ const d=balEntry(r.w, r.res, r); const k=`${d.w.toFixed(2)}|${d.serie}|${d.lang}|${d.box}`;
+      if(have[k]){ have[k]--; skip++; return; } map[balNewId()+(i++)]=d; });
+    const n=Object.keys(map).length;
+    if(n && !(await balPutMany(map))) return;
+    $('bal-imp').hidden=true; $('bal-imp-txt').value='';
+    balSay(`${n} pesée${n>1?'s':''} importée${n>1?'s':''}${skip?` (${skip} déjà présente${skip>1?'s':''}, ignorée${skip>1?'s':''})`:''}.`);
+  });
+  $('bal-csv').addEventListener('click', async ()=>{
+    const cls=balClassify(), num=balNumbers(), lines=['num;poids_g;serie;langue;display;contenu;classement'];
+    pesees().sort((a,b)=>(a.t||0)-(b.t||0)).forEach(p=>lines.push([num[p._id], balFmt(p.w), p.serie||'', p.lang||'', p.box||'', p.res==='hit'?'hit':p.res==='no'?'pas de hit':'non ouvert', cls[p._id]?'probablement '+cls[p._id]:''].join(';')));
+    const txt=lines.join('\n');
+    try{ await navigator.clipboard.writeText(txt); balSay('CSV copié.'); $('bal-out-w').hidden=true; }
+    catch(e){ $('bal-out').value=txt; $('bal-out-w').hidden=false; $('bal-imp').hidden=true; $('bal-out').focus(); $('bal-out').select(); balSay('Copie automatique refusée : sélectionne le texte et copie-le.'); }
+  });
+  $('bal-clear').addEventListener('click', ()=>{ $('bal-confirm').hidden=false; });
+  $('bal-clear-no').addEventListener('click', ()=>{ $('bal-confirm').hidden=true; });
+  $('bal-clear-yes').addEventListener('click', async ()=>{ const ids=pesees().map(p=>p._id); $('bal-confirm').hidden=true; await balDelMany(ids); balSay(`${ids.length} pesée${ids.length>1?'s':''} effacée${ids.length>1?'s':''}.`); });
+  let balRz=null; window.addEventListener('resize', ()=>{ if(S.view!=='balance') return; clearTimeout(balRz); balRz=setTimeout(renderBal, 150); });
+
+  // ---- Vues : écran d'ouverture (Stock ou Balance) et bascule en haut de page
+  function setView(v){
+    S.view = v==='balance' ? 'balance' : 'stock';
+    document.body.classList.toggle('view-bal', S.view==='balance');
+    $('bal').hidden = S.view!=='balance';
+    document.querySelectorAll('.views button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.view===S.view)));
+    $('launch').hidden = true;
+    if(S.view==='balance') renderBal();
+    window.scrollTo(0,0);
+  }
+  document.querySelectorAll('.views button, .launch-ch button').forEach(b=>b.addEventListener('click', ()=>setView(b.dataset.view)));
+  { const lg=document.querySelector('h1 .logo'); if(lg) $('launch-logo').src=lg.src; else $('launch-logo').hidden=true; }
+  balDefaults();
+  { let q=''; try{ q=new URLSearchParams(location.search).get('vue')||''; }catch(e){}
+    if(q==='balance' || q==='stock') setView(q);
+    else { $('launch').hidden=false; try{ document.querySelector('.launch-in').focus({preventScroll:true}); }catch(e){} } }
+
   // ---- Démarrage
   resetAchat(); resetTcg();
   let start='tresorerie';
@@ -2109,6 +2374,8 @@ td.zero{color:var(--muted)}
         async delete(){ const o=read(); delete o[_id]; write(o); markLocal([],[_id]); } }; },
       onSnapshot(cb){ listeners.push(cb); setTimeout(()=>cb(snap()),0); return ()=>{ listeners=listeners.filter(f=>f!==cb); }; },
       readAll: read,
+      setMany(map){ const o=read(); const ids=Object.keys(map); ids.forEach(id=>{ o[id]=JSON.parse(JSON.stringify(map[id])); }); write(o); markLocal(ids,[]); },
+      deleteMany(ids){ const o=read(); ids.forEach(id=>{ delete o[id]; }); write(o); markLocal([],ids); },
       replaceAll(o){ const old=read(); write(o); markLocal(Object.keys(o), Object.keys(old).filter(id=>!(id in o))); },
       applyRemote(rows){ const o=read(); let ch=false;
         rows.forEach(r=>{ if(!r || typeof r.id!=='string' || !/^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(r.id)) return;

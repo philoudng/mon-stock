@@ -1,7 +1,7 @@
 {
   "name": "Stock Philou",
   "short_name": "Stock Philou",
-  "description": "Trésorerie, abonnements, achats et ventes de cartes, bilan mensuel et annuel.",
+  "description": "Trésorerie, abonnements, achats et ventes de cartes, bilan, et balance pour peser les boosters.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",
@@ -24,6 +24,34 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Balance",
+      "short_name": "Balance",
+      "description": "Peser des boosters",
+      "url": "./?vue=balance",
+      "icons": [
+        {
+          "src": "icons/logo-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Stock",
+      "short_name": "Stock",
+      "description": "Trésorerie, achats, ventes",
+      "url": "./?vue=stock",
+      "icons": [
+        {
+          "src": "icons/logo-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }
